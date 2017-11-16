@@ -32,22 +32,30 @@ class Orbit(object):
         self.clear_data()
         self.get_star(code)
         LOGGER.debug('star = %s', self.star)
-        self.get_radius(orbit_no)
-        self.determine_period()
-        self.determine_angular_diameter()
-
-        if self.orbit_no is None:
-            resp.status = falcon.HTTP_400
+        if self.star is not None:
+            self.get_radius(orbit_no)
+            self.determine_period()
+            self.determine_angular_diameter()
+            if self.orbit_no is None:
+                resp.body = json.dumps({
+                    'message': 'Invalid orbit number'
+                })
+                resp.status = falcon.HTTP_400
+            else:
+                doc = {
+                    'angular_dia_deg': self.angular_dia_deg,
+                    'angular_dia_sun': self.angular_dia_sun,
+                    'au': self.au,
+                    'mkm': self.mkm,
+                    'period': self.period
+                }
+                resp.body = json.dumps(doc)
+                resp.status = falcon.HTTP_200
         else:
-            doc = {
-                'angular_dia_deg': self.angular_dia_deg,
-                'angular_dia_sun': self.angular_dia_sun,
-                'au': self.au,
-                'mkm': self.mkm,
-                'period': self.period
-            }
-            resp.body = json.dumps(doc)
-            resp.status = falcon.HTTP_200
+            resp.body = json.dumps({
+                'message': 'Invalid star classification'
+            })
+            resp.status = falcon.HTTP_400
 
     def clear_data(self):
         '''Clear data on new request'''

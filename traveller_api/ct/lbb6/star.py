@@ -33,6 +33,9 @@ class Star(object):
         self.calculate_hz_period()
 
         if self.type is None:
+            resp.body = json.dumps({
+                'message': 'Invalid star classification'
+            })
             resp.status = falcon.HTTP_400
         else:
             doc = {
