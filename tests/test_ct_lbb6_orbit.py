@@ -34,7 +34,16 @@ def test_orbit_valid(client):
 
 
 def test_orbit_invalid(client):
-    '''Test result of invalid ct/lbb6/star/orbit API call'''
+    '''Test result of invalid ct/lbb6/star/orbit API call (invalid orbit)'''
     resp = client.simulate_get('/ct/lbb6/star/F7V/orbit/-1')
 
     assert resp.status == falcon.HTTP_400
+    assert resp.json == {"message": "Invalid orbit number"}
+
+
+def test_orbit_invalid_star(client):
+    '''Test result of invalid ct/lbb6/star/orbit API call (invalid star)'''
+    resp = client.simulate_get('/ct/lbb6/star/F7U/orbit/1')
+
+    assert resp.status == falcon.HTTP_400
+    assert resp.json == {"message": "Invalid star classification"}
