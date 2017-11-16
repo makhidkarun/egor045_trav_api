@@ -1,73 +1,72 @@
 API layout
 ==========
 
-/ct/lbb6/star/
-             /<star>    # Returns basic stellar data below
-             /<star>/type
-             /<star>/decimal
-             /<star>/size
-             /<star>/min_orbit
-             /<star>/hz_orbit
-             /<star>/magnitude
-             /<star>/luminosity
-             /<star>/temperature
-             /<star>/radius
-             /<star>/mass
-             /<star>/hz_period
+/ct/lbb6/star/<star>    # Returns basic stellar data below
+                        # type (OBAFGKM)
+                        # decimal
+                        # size (Ia, Ib, II, III, IV, V, VI, D)
+                        # min_orbit (minimum orbit)
+                        # hz_orbit (habitable zone orbit)
+                        # magnitude (bolometric magnitude)
+                        # luminosity (luminosity compared to Sol)
+                        # temperature (degrees K)
+                        # radius (compared to Sol)
+                        # mass (compared to Sol)
+                        # hz_period (orbital period of habitable zone orbit - standard years)
+                        # int_orbit (largest interior orbit - unusable)
 
-             /<star>/orbit  # Returns star's min_orbit, hz_orbit
-             /<star>/orbit/<orbit>  # Returns basic details for orbit <orbit> below
-             /<star>/orbit/<orbit>/period
-             /<star>/orbit/<orbit>/angular_diameter
-             /<star>/orbit/<orbit>/radius
-             /<star>/orbit/<orbit>/planet/
-             /<star>/orbit/<orbit>/planet/<uwp>     # Returns basic planet data below
-                                         /<uwp>/temperature
-                                         /<uwp>/trade_classifications
-                                         /<uwp>/cloudiness
-                                         /<uwp>/albedo
+/ct/lbb6/star/<star>/orbit/<orbit>  # Returns basic details for orbit <orbit> below
+                                    # period (orbital period - standard years)
+                                    # angular_diameter_deg (angular diameter - degrees)
+                                    # angular_diameter_sun (angular diameter - sun-relative)
+                                    # au (radius - au)
+                                    # mkm (radius - Mkm)
+             
+/ct/lbb6/star/<star>/orbit/<orbit>/planet/<uwp>     # Returns basic planet data below
+                                                    # temperature (min, max - degrees K)
+                                                    # trade_classifications
+                                                    # cloudiness (min, max)
+                                                    # albedo (min, max)
 
 
 /ct/lbb6/planet/
                /<uwp>   # Returns basic planet data below
-               /<uwp>/trade_classifications
-               /<uwp>/cloudiness
-               /<uwp>/albedo
+               # temperature (min, max - degrees K)
+               # trade_classifications
+               # cloudiness (min, max)
+               # albedo (min, max)
 
-/misc/angdia/
-            /<diameter>/<range>  # Return angular diameter (degrees) for object diameter 
-            <diameter> at a distance of <range>
+/misc/angdia/<diameter>/<range>  # Return angular diameter (degrees) for object diameter <diameter> at a distance of <range>
 
-/mt/wbh/star/
-             <star>    # Returns basic stellar data below
-             /<star>/type
-             /<star>/decimal
-             /<star>/size
-             /<star>/min_orbit
-             /<star>/hz_orbit
-             /<star>/magnitude
-             /<star>/luminosity
-             /<star>/temperature
-             /<star>/radius
-             /<star>/mass
-             /<star>/hz_period
+/mt/wbh/star/<star>     # Returns basic stellar data below
+                        # type (OBAFGKM)
+                        # decimal
+                        # size (Ia, Ib, II, III, IV, V, VI, D)
+                        # min_orbit (minimum orbit)
+                        # hz_orbit (habitable zone orbit)
+                        # magnitude (bolometric magnitude)
+                        # luminosity (luminosity compared to Sol)
+                        # temperature (degrees K)
+                        # radius (compared to Sol)
+                        # mass (compared to Sol)
+                        # hz_period (orbital period of habitable zone orbit - standard years)
 
-             /<star>/orbit  # Returns star's min_orbit, hz_orbit
-             /<star>/orbit/<orbit>  # Returns basic details for orbit <orbit> below
-             /<star>/orbit/<orbit>/period
-             /<star>/orbit/<orbit>/angular_diameter
-             /<star>/orbit/<orbit>/radius
-             /<star>/orbit/<orbit>/planet/
-             /<star>/orbit/<orbit>/planet/<uwp>     # Returns basic planet data below
-                                         /<uwp>/temperature
-                                         /<uwp>/trade_classifications
-                                         /<uwp>/cloudiness
-                                         /<uwp>/albedo
+/mt/wbh/star/<star>/orbit/<orbit>   # Returns basic details for orbit <orbit> below
+                                    # period (orbital period - standard years)
+                                    # angular_diameter_deg (angular diameter - degrees)
+                                    # angular_diameter_sun (angular diameter - sun-relative)
+                                    # au (radius - au)
+                                    # mkm (radius - Mkm)
 
-/mt/wbh/planet/
-               /<uwp>   # Returns basic planet data below
-               /<uwp>/trade_classifications
-               /<uwp>/cloudiness
-               /<uwp>/albedo
+/mt/wbh/star/<star>/orbit/<orbit>/planet/<uwp>      # Returns basic planet data below
+                                                    # temperature (min, max - degrees K)
+                                                    # trade_classifications
+                                                    # cloudiness (min, max)
+                                                    # albedo (min, max)
+/mt/wbh/planet/<uwp>    # Returns basic planet data below
+                        # temperature (min, max - degrees K)
+                        # trade_classifications
+                        # cloudiness (min, max)
+                        # albedo (min, max)
 
 /ce/cargo
