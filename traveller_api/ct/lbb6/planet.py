@@ -1,18 +1,67 @@
 '''planet.py'''
 
 import logging
+import json
 import re
+import requests
+import falcon
 from random import seed, randint
-from ehex.ehex import ehex
+from ehex import ehex
 
 LOGGER = logging.getLogger(__name__)
-# LOGGER.setLevel(logging.ERROR)
+LOGGER.setLevel(logging.DEBUG)
 
 
 class Planet(object):
     '''Planet class'''
-    def __init__(self, uwp, orbit=None, star=None):
+
+    def __init__(self):
         seed()
+        self.clear_data()
+
+    def on_get(self, req, resp, code, orbit_no, uwp):
+        '''GET /ct/lbb6/star/<code>/<star>/orbit/<orbit>/planet/<uwp>'''
+        self.clear_data()
+        self.get_star(code)
+        if self.star is None:
+            resp.body = json.dumps({
+                'message': 'Invalid star classification'
+            })
+            resp.status = falcon.HTTP_400
+        else:
+            self.get_orbit(code, orbit_no)
+            LOGGER.debug('Got orbit, is %s', self.orbit)
+            if self.orbit is None:
+                resp.body = json.dumps({
+                    'message': 'Invalid orbit number'
+                })
+                resp.status = falcon.HTTP_400
+            else:
+                self.process_uwp(uwp)
+                if self.uwp is None:
+                    resp.body = json.dumps({
+                        'message': 'Invalid UWP'
+                    })
+                    resp.status = falcon.HTTP_400
+                else:
+                    self.determine_trade_classifications()
+                    self.determine_cloudiness()
+                    self.determine_albedo()
+                    self.determine_temperature()
+
+                    doc = {
+                        'uwp': self.uwp,
+                        'trade_classifications': self.trade_classifications,
+                        'cloudiness': self.cloudiness,
+                        'albedo': self.albedo,
+                        'temperature': self.temperature
+
+                    }
+                    resp.body = json.dumps(doc)
+                    resp.status = falcon.HTTP_200
+
+    def clear_data(self):
+        '''Clear data for new request'''
         self.uwp = None
         self.starport = None
         self.size = None
@@ -24,28 +73,48 @@ class Planet(object):
         self.techlevel = None
         self.trade_classifications = []
         self.cloudiness = None
+        self.orbit = None
+        self.star = None
         self.albedo = {}
         self.temperature = {}
-        self.orbit = orbit
-        self.star = star
-
         for field in ['min', 'max']:
             self.albedo[field] = None
             self.temperature[field] = None
 
-        self.process_uwp(uwp)
-        self.determine_trade_classifications()
-        self.determine_cloudiness()
-        self.determine_albedo()
-        self.determine_temperature()
+    def get_star(self, code):
+        '''Get star details'''
+        LOGGER.debug('Querying API endpoint for star type %s', code)
+        resp = requests.get(
+            'http://localhost:8000/ct/lbb6/star/{}'.format(code))
+        LOGGER.debug('Done, response status = %s', resp.status_code)
+        LOGGER.debug('resp.json() = %s', resp.json())
+        if resp.status_code == 200:
+            self.star = resp.json()
+
+    def get_orbit(self, code, orbit_no):
+        '''Get orbit details'''
+        LOGGER.debug(
+            'Querying API endpoint for star type %s, orbit %d',
+            code,
+            orbit_no)
+        resp = requests.get(
+            'http://localhost:8000/ct/lbb6/star/{}/orbit/{}'.format(
+                code,
+                orbit_no))
+        LOGGER.debug('Done, response status = %s', resp.status_code)
+        LOGGER.debug('resp.json() = %s', resp.json())
+        if resp.status_code == 200:
+            self.orbit = resp.json()
 
     def process_uwp(self, uwp):
         '''Process UWP, populate variables'''
+        LOGGER.debug('uwp = %s', uwp)
         re_uwp = r'([A-HYX])([0-9AS])([0-9A-F])([0-9A])([0-9A])' +\
             r'([0-9A-F])([0-9A-HJ-NP-Z)])\-([0-9A-HJ-NP-Z)])'
         if uwp:
             mtch = re.match(re_uwp, str(uwp))
             if mtch:
+                LOGGER.debug('UWP %s matches RE', uwp)
                 self.uwp = uwp
                 self.starport = mtch.group(1)
                 self.size = ehex(mtch.group(2))
@@ -55,6 +124,7 @@ class Planet(object):
                 self.government = ehex(mtch.group(6))
                 self.lawlevel = ehex(mtch.group(7))
                 self.techlevel = ehex(mtch.group(8))
+        LOGGER.debug('self.uwp = %s', self.uwp)
 
     def determine_trade_classifications(self):
         '''Determine trade classifications'''
@@ -227,12 +297,12 @@ class Planet(object):
             self.temperature['max'] = round(
                 374.025 * greenhouse *
                 (1 - self.albedo['min']) *
-                self.star.luminosity ** 0.25 / self.orbit.au ** 0.5,
+                self.star['luminosity'] ** 0.25 / self.orbit['au'] ** 0.5,
                 3)
             self.temperature['min'] = round(
                 374.025 * greenhouse *
                 (1 - self.albedo['max']) *
-                self.star.luminosity ** 0.25 / self.orbit.au ** 0.5,
+                self.star['luminosity'] ** 0.25 / self.orbit['au'] ** 0.5,
                 3)
             LOGGER.debug(
                 'temperature = (%s, %s)',
