@@ -1,0 +1,15 @@
+*.pyc
+.idea
+.pylintrc
+COMMIT_EDITMSG.COMMIT_EDITMSG
+*.ipynb
+.vscode
+tmp
+build
+*.egg-info
+*pdf
+dist
+*tab
+*ods
+venv*
+.cache
