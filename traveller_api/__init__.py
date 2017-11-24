@@ -5,13 +5,14 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, Float, String
+import configparser
 
 logging.basicConfig(
     format='%(relativeCreated)d %(name)s %(funcName)s(): %(message)s',
     level=logging.INFO
 )
 LOGGER = logging.getLogger(__name__)
+LOGGER.setLevel(logging.DEBUG)
 
 BASE = declarative_base()
 
@@ -25,3 +26,17 @@ class DB(object):
         self.engine = create_engine(
             'sqlite:///{}'.format(sqlite_file))
         self.session = sessionmaker(bind=self.engine)
+
+
+class Config(object):
+    '''Config class'''
+
+    def __init__(self):
+        self.config = configparser.ConfigParser()
+        self.config.read('traveller_rest_api.ini')
+
+        for section in self.config.sections():
+            LOGGER.debug('config section = %s', section)
+
+            for key in self.config[section]:
+                LOGGER.debug('Loading key %s', key)

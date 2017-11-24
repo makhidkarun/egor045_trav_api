@@ -8,9 +8,13 @@ import requests
 import falcon
 from .db import Schemas
 from ... import DB
+from ... import Config
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
+
+KONFIG = Config()
+config = KONFIG.config['traveller_api.ct.lbb6']
 
 
 class Orbit(object):
@@ -21,7 +25,7 @@ class Orbit(object):
         # Path
         sqlite_file = '{}/{}'.format(
             os.path.dirname(os.path.realpath(__file__)),
-            'star.sqlite')
+            config.get('dbfile'))
         self.db = DB(sqlite_file)
         self.session = self.db.session()
 
