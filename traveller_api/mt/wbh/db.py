@@ -38,9 +38,8 @@ class Schemas(object):
 
         def __repr__(self):
             fmt_string = '<Star(typ={0} decimal={1} size={2} min_orbit={3} '
-            fmt_string += 'hz_orbit={4} int_orbit={10} magnitude={5} '
-            fmt_string += 'luminosity={6} '
-            fmt_string += 'temperature={7} radius={8} mass={9})>'
+            fmt_string += 'hz_orbit={4} int_orbit={7} '
+            fmt_string += 'luminosity={5} mass={6})>'
             return fmt_string.format(
                 self.typ,
                 self.decimal,
