@@ -3,6 +3,7 @@
 import falcon
 import traveller_api.ct as ct
 import traveller_api.misc as misc
+import traveller_api.mt as mt
 
 api = application = falcon.API()
 
@@ -17,3 +18,6 @@ api.add_route(
 api.add_route(
     '/ct/lbb6/star/{code}/orbit/{orbit_no:int}/planet/{uwp}',
     ct.lbb6.planet.Planet())
+
+# MegaTraveller World Builder's Handbook APIs
+api.add_route('/mt/wbh/star/{code}', mt.wbh.star.Star())
