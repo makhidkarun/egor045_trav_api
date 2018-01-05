@@ -6,7 +6,10 @@ import traveller_api.misc as misc
 
 api = application = falcon.API()
 
+# Misc APIs
 api.add_route('/misc/angdia/{distance}/{diameter}', misc.AngDia())
+
+# Classic Traveller APIs
 api.add_route('/ct/lbb6/star/{code}', ct.lbb6.star.Star())
 api.add_route(
     '/ct/lbb6/star/{code}/orbit/{orbit_no:int}',
