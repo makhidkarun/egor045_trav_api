@@ -3,6 +3,17 @@
 from math import atan2, pi
 import falcon
 import json
+import logging
+import os
+from .. import Config
+from .db import Schemas
+
+
+LOGGER = logging.getLogger(__name__)
+LOGGER.setLevel(logging.DEBUG)
+
+KONFIG = Config()
+config = KONFIG.config['traveller_api.misc']
 
 
 class AngDia(object):
@@ -24,3 +35,23 @@ class AngDia(object):
         }
         resp.body = json.dumps(doc)
         resp.status = falcon.HTTP_200
+
+
+class StarColor(object):
+    '''Star color API
+    GET /misc/starcolor/<code>
+    Return (r, G, B) corresponding to star color'''
+    # See star_color.sqlite for RGB
+
+    def __init__(self):
+        self.clear_data()
+        # Path
+        sqlite_file = '{}/{}'.format(
+            os.path.dirname(os.path.realpath(__file__)),
+            config.get('dbfile'))
+        self.db = DB(sqlite_file)
+        self.session = self.db.session()
+
+    def on_get(self, req, resp, code):
+        '''GET /misc/starcolor/<code>'''
+

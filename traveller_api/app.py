@@ -21,3 +21,6 @@ api.add_route(
 
 # MegaTraveller World Builder's Handbook APIs
 api.add_route('/mt/wbh/star/{code}', mt.wbh.star.Star())
+api.add_route(
+    '/mt/wbh/star/{code}/orbit/{orbit_no:int}',
+    mt.wbh.orbit.Orbit())
