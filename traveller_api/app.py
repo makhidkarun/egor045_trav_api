@@ -4,6 +4,7 @@ import falcon
 import traveller_api.ct as ct
 import traveller_api.misc as misc
 import traveller_api.mt as mt
+import traveller_api.t5.cargogen as t5_cargogen
 
 api = application = falcon.API()
 
@@ -24,3 +25,13 @@ api.add_route('/mt/wbh/star/{code}', mt.wbh.star.Star())
 api.add_route(
     '/mt/wbh/star/{code}/orbit/{orbit_no:int}',
     mt.wbh.orbit.Orbit())
+
+# T5 Cargogen API
+api.add_route('/t5/cargogen/source/{source_uwp}', t5_cargogen.CargoGen())
+api.add_route(
+    '/t5/cargogen/source/{source_uwp}/market/{market_uwp}',
+    t5_cargogen.CargoGen())
+api.add_route(
+    '/t5/cargogen/source/{source_uwp}/market/{market_uwp}/' +
+    'broker/{broker_skill:int}',
+    t5_cargogen.BrokerGen())
