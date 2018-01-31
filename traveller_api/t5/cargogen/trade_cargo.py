@@ -10,6 +10,7 @@ LOGGER.setLevel(logging.DEBUG)
 
 class FluxRoll(object):
     '''Flux roll'''
+
     def __init__(self):
         self.die1 = randint(1, 6)
         self.die2 = randint(1, 6)
@@ -28,6 +29,7 @@ FLUX = FluxRoll()
 
 class TradeCargo(object):
     '''Spec cargo object'''
+
     def __init__(self):
         self.cost = 0
         self.description = ''
@@ -396,6 +398,7 @@ class TradeCargo(object):
 
 class TradeCargoBroker(TradeCargo):
     '''Spec cargo + broker object'''
+
     def __init__(self):
         super(TradeCargoBroker, self).__init__()
         self.broker_skill = None
@@ -419,6 +422,7 @@ class TradeCargoBroker(TradeCargo):
         LOGGER.debug('self.broker_skill = %s', self.broker_skill)
 
         if market_uwp is not None:
+            self.validate_uwp(market_uwp)
             self.market_world = Planet()
             self.market_world._load_uwp(market_uwp)
             self.market_world.mainworld_type = None
