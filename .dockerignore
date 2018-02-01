@@ -1,0 +1,9 @@
+# .dockerignore
+
+tmp
+venv*
+star.ods
+star.csv
+.git
+*.pyc
+__pycache__

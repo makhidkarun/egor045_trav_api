@@ -1,0 +1,7 @@
+gunicorn
+configparser
+falcon
+requests
+sqlalchemy
+ehex
+T5_worldgen
