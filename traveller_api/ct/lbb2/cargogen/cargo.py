@@ -1,0 +1,332 @@
+'''cargo.py'''
+
+import re
+import json
+import logging
+from ...util import Die
+from ehex import ehex
+
+LOGGER = logging.getLogger(__name__)
+LOGGER.setLevel(logging.DEBUG)
+
+RE_QUANTITY = re.compile('^([0-9]+)D')
+RE_QUANTITY_X = re.compile('^([0-9]+)Dx([0-9]+)')
+
+D6 = Die(6)
+
+
+class Cargo(object):
+    '''Base cargo object'''
+
+    def __init__(self, trade_codes, population=6):
+        self._trade_goods = {
+            '11': {
+                'name': 'Textiles',
+                'base_price': 3000,
+                'purchase_dms': {'Ag': -7, 'Na': -5, 'Ni': -3},
+                'resale_dms': {'Ag': -6, 'Na': +1, 'Ri': +3},
+                'quantity': '3Dx5'},
+            '12': {
+                'name': 'Polymers',
+                'base_price': 7000,
+                'purchase_dms': {'In': -2, 'Ri': -3, 'Po': +2},
+                'resale_dms': {'In': -2, 'Ri': +3},
+                'quantity': '4Dx5'},
+            '13': {
+                'name': 'Liquor',
+                'base_price': 10000,
+                'purchase_dms': {'Ag': -4},
+                'resale_dms': {'Ag': -3, 'In': +1, 'Ri': +2},
+                'quantity': '1Dx5'},
+            '14': {
+                'name': 'Wood',
+                'base_price': 1000,
+                'purchase_dms': {'Ag': -6},
+                'resale_dms': {'Ag': -6, 'In': +1, 'Ri': +2},
+                'quantity': '2Dx10'},
+            '15': {
+                'name': 'Crystals',
+                'base_price': 20000,
+                'purchase_dms': {'Na': -3, 'In': +4},
+                'resale_dms': {'Na': -3, 'In': +3, 'Ri': +3},
+                'quantity': '1D'},
+            '16': {
+                'name': 'Radioactives',
+                'base_price': 1000000,
+                'purchase_dms': {'In': +7, 'Ni': -3, 'Ri': +5},
+                'resale_dms': {'In': +6, 'Ni': -3, 'Ri': -4},
+                'quantity': '1D'},
+            '21': {
+                'name': 'Steel',
+                'base_price': 500,
+                'purchase_dms': {'In': -2, 'Ri': -1, 'Po': +1},
+                'resale_dms': {'In': -2, 'Ri': -1, 'Po': +3},
+                'quantity': '4Dx10'},
+            '22': {
+                'name': 'Copper',
+                'base_price': 2000,
+                'purchase_dms': {'In': -3, 'Ri': -2, 'Po': +1},
+                'resale_dms': {'In': -3, 'Ri': -1},
+                'quantity': '2Dx10'},
+            '23': {
+                'name': 'Aluminum',
+                'base_price': 1000,
+                'purchase_dms': {'In': -3, 'Ri': -2, 'Po': +1},
+                'resale_dms': {'In': -3, 'Ni': +4, 'Ri': -1},
+                'quantity': '5Dx10'},
+            '24': {
+                'name': 'Tin',
+                'base_price': 9000,
+                'purchase_dms': {'In': -3, 'Ri': -2, 'Po': +1},
+                'resale_dms': {'In': -3, 'Ri': -1},
+                'quantity': '3Dx10'},
+            '25': {
+                'name': 'Silver',
+                'base_price': 70000,
+                'purchase_dms': {'In': +5, 'Ri': -1, 'Po': +2},
+                'resale_dms': {'In': +5, 'Ri': -1},
+                'quantity': '1Dx5'},
+            '26': {
+                'name': 'Special Alloys',
+                'base_price': 200000,
+                'purchase_dms': {'In': -3, 'Ni': +5, 'Ri': -2},
+                'resale_dms': {'In': -3, 'Ni': +4, 'Ri': -1},
+                'quantity': '1D'},
+            '31': {
+                'name': 'Petrochemicals',
+                'base_price': 10000,
+                'purchase_dms': {'Na': -4, 'In': +1, 'Ni': -5},
+                'resale_dms': {'Na': -4, 'In': +3, 'Ni': -5},
+                'quantity': '1D'},
+            '32': {
+                'name': 'Grain',
+                'base_price': 300,
+                'purchase_dms': {'Ag': -2, 'Na': +1, 'In': +2},
+                'resale_dms': {'Ag': -2},
+                'quantity': '8Dx5'},
+            '33': {
+                'name': 'Meat',
+                'base_price': 1500,
+                'purchase_dms': {'Ag': -2, 'Na': +2, 'In': +3},
+                'resale_dms': {'Ag': -2, 'In': +2, 'Po': +1},
+                'quantity': '4Dx5'},
+            '34': {
+                'name': 'Spices',
+                'base_price': 6000,
+                'purchase_dms': {'Ag': -2, 'Na': +3, 'In': +2},
+                'resale_dms': {'Ag': -2, 'Ri': +2, 'Po': +3},
+                'quantity': '1Dx5'},
+            '35': {
+                'name': 'Fruit',
+                'base_price': 1000,
+                'purchase_dms': {'Ag': -3, 'Na': +1, 'In': +2},
+                'resale_dms': {'Ag': -2, 'In': +3, 'Po': +2},
+                'quantity': '2Dx5'},
+            '36': {
+                'name': 'Pharmaceuticals',
+                'base_price': 100000,
+                'purchase_dms': {'Na': -3, 'In': +4, 'Po': +3},
+                'resale_dms': {'Na': -3, 'In': +5, 'Ri': +4},
+                'quantity': '1D'},
+            '41': {
+                'name': 'Gems',
+                'base_price': 1000000,
+                'purchase_dms': {'In': +4, 'Ni': -8, 'Po': -3},
+                'resale_dms': {'In': +4, 'Ni': -2, 'Ri': +8},
+                'quantity': '2D'},
+            '42': {
+                'name': 'Firearms',
+                'base_price': 30000,
+                'purchase_dms': {'In': -3, 'Ri': -2, 'Po': +3},
+                'resale_dms': {'In': -2, 'Ri': -1, 'Po': +3},
+                'quantity': '2D'},
+            '43': {
+                'name': 'Ammunition',
+                'base_price': 30000,
+                'purchase_dms': {'In': -3, 'Ri': -2, 'Po': +3},
+                'resale_dms': {'In': -2, 'Ri': -1, 'Po': +3},
+                'quantity': '2D'},
+            '44': {
+                'name': 'Blades',
+                'base_price': 10000,
+                'purchase_dms': {'In': -3, 'Ri': -2, 'Po': +3},
+                'resale_dms': {'In': -2, 'Ri': -1, 'Po': +3},
+                'quantity': '2D'},
+            '45': {
+                'name': 'Tools',
+                'base_price': 10000,
+                'purchase_dms': {'In': -3, 'Ri': -2, 'Po': +3},
+                'resale_dms': {'In': -2, 'Ri': -1, 'Po': +3},
+                'quantity': '2D'},
+            '46': {
+                'name': 'Body Armor',
+                'base_price': 50000,
+                'purchase_dms': {'In': -1, 'Ri': -3, 'Po': +3},
+                'resale_dms': {'In': -2, 'Ri': +1, 'Po': +4},
+                'quantity': '2D'},
+            '51': {
+                'name': 'Aircraft',
+                'base_price': 1000000,
+                'purchase_dms': {'In': -4, 'Ri': -3},
+                'resale_dms': {'Ni': +2, 'Po': +1},
+                'quantity': '1D'},
+            '52': {
+                'name': 'Air/raft',
+                'base_price': 6000000,
+                'purchase_dms': {'In': -3, 'Ri': -2},
+                'resale_dms': {'Ni': +2, 'Po': +1},
+                'quantity': '1D'},
+            '53': {
+                'name': 'Computers',
+                'base_price': 10000000,
+                'purchase_dms': {'In': -2, 'Ri': -2},
+                'resale_dms': {'Ni': +2, 'Po': +1, 'Ag': -3},
+                'quantity': '1D'},
+            '54': {
+                'name': 'All Terrain Vehicles',
+                'base_price': 3000000,
+                'purchase_dms': {'In': -2, 'Ri': -2},
+                'resale_dms': {'Ni': +2, 'Po': +1, 'Ag': +1},
+                'quantity': '1D'},
+            '55': {
+                'name': 'Armored Vehicles',
+                'base_price': 7000000,
+                'purchase_dms': {'In': -5, 'Ri': -2, 'Po': +4},
+                'resale_dms': {'Na': -2, 'Ag': +2, 'Ri': +1},
+                'quantity': '1D'},
+            '56': {
+                'name': 'Farm Machinery',
+                'base_price': 150000,
+                'purchase_dms': {'In': -5, 'Ri': -2},
+                'resale_dms': {'Ag': +5, 'Na': -8, 'Po': +1},
+                'quantity': '1D'},
+            '61': {
+                'name': 'Electronics Parts',
+                'base_price': 100000,
+                'purchase_dms': {'In': -4, 'Ri': -3},
+                'resale_dms': {'Ni': +2, 'Po': +1},
+                'quantity': '1Dx5'},
+            '62': {
+                'name': 'Mechanical Parts',
+                'base_price': 70000,
+                'purchase_dms': {'In': -5, 'Ri': -3},
+                'resale_dms': {'Ni': +3, 'Ag': +2},
+                'quantity': '1Dx5'},
+            '63': {
+                'name': 'Cybernetic Parts',
+                'base_price': 250000,
+                'purchase_dms': {'In': -4, 'Ri': -1},
+                'resale_dms': {'Ni': +4, 'Ag': +1, 'Na': +2},
+                'quantity': '1Dx5'},
+            '64': {
+                'name': 'Computer Parts',
+                'base_price': 150000,
+                'purchase_dms': {'In': -5, 'Ri': -3},
+                'resale_dms': {'Ni': +3, 'Ag': +1, 'Na': +2},
+                'quantity': '1Dx5'},
+            '65': {
+                'name': 'Machine Tools',
+                'base_price': 750000,
+                'purchase_dms': {'In': -5, 'Ri': -4},
+                'resale_dms': {'Ni': +3, 'Ag': +1, 'Na': +2},
+                'quantity': '1Dx5'},
+            '66': {
+                'name': 'Vacc Suits',
+                'base_price': 400000,
+                'purchase_dms': {'Na': -5, 'In': -3, 'Ri': +1},
+                'resale_dms': {'Na': -1, 'Ni': +2, 'Po': +1},
+                'quantity': '1Dx5'}
+        }
+        self.name = ''
+        self.id = 0
+        self.base_price = 0
+        self.purchase_dms = {}
+        self.resale_dms = {}
+        self.quantity = 0
+        self.actual_unit_price = 0
+        self.actual_lot_price = 0
+        self.trade_codes = trade_codes
+
+        self.select_cargo(population)
+        self.determine_actual_unit_price()
+        self.actual_lot_price = self.actual_unit_price * self.quantity
+
+    def select_cargo(self, population):
+        '''Select cargo'''
+        # population DM
+        LOGGER.debug('population = %s', population)
+        die_mod = 0
+        if population is not None:
+            population = ehex(population)
+            if int(population) >= 9:
+                die_mod = 1
+            elif int(population) <= 5:
+                die_mod = -1
+        LOGGER.debug('Die 1 DM = %s', die_mod)
+        cargo_id = '{}{}'.format(
+            D6.roll(dice=1, modifier=die_mod, floor=1, ceiling=6),
+            D6.roll())
+        self.name = self._trade_goods[cargo_id]['name']
+        self.id = cargo_id
+        self.base_price = self._trade_goods[cargo_id]['base_price']
+        self.purchase_dms = self._trade_goods[cargo_id]['purchase_dms']
+        self.resale_dms = self._trade_goods[cargo_id]['resale_dms']
+        self.quantity = self.determine_quantity(
+            self._trade_goods[cargo_id]['quantity'])
+
+    def determine_quantity(self, quantity_string):
+        '''Determine lot size'''
+        if 'Dx' in quantity_string:
+            match = RE_QUANTITY_X.match(quantity_string)
+            if match:
+                return int(
+                    D6.roll(int(match.group(1))) * int(match.group(2)))
+        else:
+            match = RE_QUANTITY.match(quantity_string)
+            if match:
+                return int(D6.roll(int(match.group(1))))
+
+    def determine_actual_unit_price(self):
+        '''Determine actual unit price'''
+        # Determine DM
+        die_mod = 0
+        for code in self.trade_codes:
+            if code in self.purchase_dms:
+                die_mod += self.purchase_dms[code]
+
+        self.actual_unit_price = int(
+            self.base_price * self.determine_actual_value(die_mod))
+
+    def json(self):
+        '''Return JSON representation'''
+        doc = {
+            'name': self.name,
+            'id': self.id,
+            'base_price': self.base_price,
+            'purchase_dms': self.purchase_dms,
+            'resale_dms': self.resale_dms,
+            'quantity': self.quantity,
+            'actual_unit_price': self.actual_unit_price,
+            'actual_lot_price': self.actual_lot_price,
+            'trade_codes': self.trade_codes
+        }
+        return json.dumps(doc)
+
+    @staticmethod
+    def determine_actual_value(die_mod):
+        '''Determine actual value table'''
+        result = 0.0
+        roll = D6.roll(2, die_mod)
+        roll = max(2, roll)
+        roll = min(15, roll)
+        if roll <= 3:
+            result = float((roll - 2) / 10) + 0.4
+        elif roll >= 4 and roll <= 10:
+            result = float((roll - 4) / 10) + 0.7
+        elif roll == 11:
+            result = 1.5
+        elif roll == 12:
+            result = 1.7
+        elif roll >= 13:
+            result = float(roll - 11)
+        return result

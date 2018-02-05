@@ -35,3 +35,6 @@ api.add_route(
     '/t5/cargogen/source/{source_uwp}/market/{market_uwp}/' +
     'broker/{broker_skill:int}',
     t5_cargogen.BrokerGen())
+
+# CT Cargogen API
+api.add_route('/ct/lbb2/cargogen/purchase', ct.lbb2.cargogen.Purchase())

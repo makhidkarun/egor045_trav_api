@@ -72,6 +72,7 @@ API layout
 /ct/lbb2/cargogen/purchase?
                             source_uwp=<uwp>    # Source world UWP. Overrides source_tc
                             source_tc=<tc>      # Multiple allowed
+                            population=<pop>    # Source market population code
     Returns
     {
         "source_tc": [<tc>, <tc>]
@@ -105,6 +106,6 @@ API layout
         "commission": <broker commission>
         "actual gross unit price": <actual unit price (ignoring commission)>
         "actual gross lot price": <actual lot price (ignoring commission)>
-        "actual net unit price": <actual unit price (commission included)>
-        "actual net lot price": <actual lot price (commisson included)>
+        "actual net unit price": <actual unit price (commission deducted)>
+        "actual net lot price": <actual lot price (commisson deducted)>
     }
