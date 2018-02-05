@@ -11,6 +11,7 @@ LOGGER.setLevel(logging.DEBUG)
 
 RE_QUANTITY = re.compile('^([0-9]+)D')
 RE_QUANTITY_X = re.compile('^([0-9]+)Dx([0-9]+)')
+RE_ID = re.compile('^[1-6][1-6]$')
 
 D6 = Die(6)
 
@@ -19,6 +20,23 @@ class Cargo(object):
     '''Base cargo object'''
 
     def __init__(self, trade_codes, population=6):
+        self._populate_trade_goods()
+        self.name = ''
+        self.id = 0
+        self.base_price = 0
+        self.purchase_dms = {}
+        self.resale_dms = {}
+        self.quantity = 0
+        self.actual_unit_price = 0
+        self.actual_lot_price = 0
+        self.trade_codes = trade_codes
+
+        self.select_cargo(population)
+        self.determine_actual_unit_price()
+        self.actual_lot_price = self.actual_unit_price * self.quantity
+
+    def _populate_trade_goods(self):
+        '''Populate _trade_goods dict'''
         self._trade_goods = {
             '11': {
                 'name': 'Textiles',
@@ -237,19 +255,6 @@ class Cargo(object):
                 'resale_dms': {'Na': -1, 'Ni': +2, 'Po': +1},
                 'quantity': '1Dx5'}
         }
-        self.name = ''
-        self.id = 0
-        self.base_price = 0
-        self.purchase_dms = {}
-        self.resale_dms = {}
-        self.quantity = 0
-        self.actual_unit_price = 0
-        self.actual_lot_price = 0
-        self.trade_codes = trade_codes
-
-        self.select_cargo(population)
-        self.determine_actual_unit_price()
-        self.actual_lot_price = self.actual_unit_price * self.quantity
 
     def select_cargo(self, population):
         '''Select cargo'''
@@ -330,3 +335,127 @@ class Cargo(object):
         elif roll >= 13:
             result = float(roll - 11)
         return result
+
+
+class CargoSale(Cargo):
+    '''Sale object'''
+
+    def __init__(
+            self,
+            cargo,
+            admin=0, bribery=0, broker=0,
+            quantity=0,
+            trade_codes=[]):
+
+        self._populate_trade_goods()
+        self.actual_gross_unit_price = 0
+        self.actual_gross_lot_price = 0
+        self.actual_net_unit_price = 0
+        self.actual_net_lot_price = 0
+        self.commission = 0
+
+        try:
+            var = 'admin'
+            self.admin = int(admin)
+            assert self.admin >= 0
+            var = 'bribery'
+            self.bribery = bribery
+            assert self.bribery >= 0
+            var = 'broker'
+            self.broker = int(broker)
+            assert self.broker <= 4
+            assert self.broker >= 0
+            var = 'quantity'
+            self.quantity = int(quantity)
+            assert self.quantity >= 0
+            var = 'trade_codes'
+            self.trade_codes = trade_codes
+        except AssertionError:
+            raise ValueError(var)
+        except ValueError:
+            raise ValueError(var)
+        self.find_cargo(cargo)
+
+        self._determine_actual_unit_price()
+        self._determine_commission()
+
+    def find_cargo(self, cargo):
+        '''Find cargo (may be name or id), set ID and name'''
+        if cargo is None:
+            raise ValueError('cargo ID/name cannot be None')
+        else:
+            cargo = str(cargo)
+        if RE_ID.match(cargo):
+            # cargo is id. not name
+            self.name = self._trade_goods[cargo]['name']
+            self.id = cargo
+            self.purchase_dms = self._trade_goods[cargo]['purchase_dms']
+            self.resale_dms = self._trade_goods[cargo]['resale_dms']
+            self.base_price = self._trade_goods[cargo]['base_price']
+        else:
+            # cargo should be name, raise ValueError if not'''
+            is_valid = False
+            for cargo_id in self._trade_goods:
+                if self._trade_goods[cargo_id]['name'].lower() == \
+                        cargo.lower():
+                    is_valid = True
+                    self.name = self._trade_goods[cargo_id]['name']
+                    self.id = cargo_id
+                    self.purchase_dms = \
+                        self._trade_goods[cargo_id]['purchase_dms']
+                    self.resale_dms = \
+                        self._trade_goods[cargo_id]['resale_dms']
+                    self.base_price = \
+                        self._trade_goods[cargo_id]['base_price']
+            if not is_valid:
+                raise ValueError('cargo')
+
+    def _determine_actual_unit_price(self):
+        '''Determine actual sale price'''
+        die_mod = self.broker + self.admin + self.bribery
+        for code in self.trade_codes:
+            if code in self.resale_dms:
+                die_mod += self.resale_dms[code]
+
+        self.actual_gross_unit_price = int(
+            self.base_price * self.determine_actual_value(die_mod))
+        self.actual_gross_lot_price = \
+            self.actual_gross_unit_price * self.quantity
+
+    def _determine_commission(self):
+        '''Determine commission, net prices'''
+        LOGGER.debug(
+            'base_price is %s = %s',
+            type(self.base_price), self.base_price)
+        LOGGER.debug(
+            'broker is %s = %s',
+            type(self.broker), self.broker)
+        LOGGER.debug(
+            'quantity is %s = %s',
+            type(self.quantity), self.quantity)
+        unit_commission = int(self.base_price * self.broker * 0.05)
+        self.commission = unit_commission * self.quantity
+        self.actual_net_unit_price = self.actual_gross_unit_price - \
+            unit_commission
+        self.actual_net_lot_price = self.actual_net_unit_price * \
+            self.quantity
+
+    def json(self):
+        '''JSON representation'''
+
+        doc = {
+            'name': self.name,
+            'id': self.id,
+            'base_price': self.base_price,
+            'quantity': self.quantity,
+            'commission': self.commission,
+            'admin': self.admin,
+            'bribery': self.bribery,
+            'broker': self.broker,
+            'actual_gross_unit_price': self.actual_gross_unit_price,
+            'actual_gross_lot_price': self.actual_gross_lot_price,
+            'actual_net_unit_price': self.actual_net_unit_price,
+            'actual_net_lot_price': self.actual_net_lot_price,
+            'trade_codes': self.trade_codes
+        }
+        return json.dumps(doc)

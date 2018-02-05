@@ -38,3 +38,4 @@ api.add_route(
 
 # CT Cargogen API
 api.add_route('/ct/lbb2/cargogen/purchase', ct.lbb2.cargogen.Purchase())
+api.add_route('/ct/lbb2/cargogen/sale', ct.lbb2.cargogen.Sale())

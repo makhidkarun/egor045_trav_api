@@ -94,10 +94,9 @@ API layout
                             market_tc=<tc>      # Multiple allowed
     Returns
     {
-        "market_uwp": <market_uwp>
         "market_tc": [<tc>, <tc>]
-        "cargo name": <cargo name>
-        "cargo id": <cargo id>
+        "name": <cargo name>
+        "id": <cargo id>
         "quantity": <quantity>
         "base price": <base price>
         "admin": <admin skill>
