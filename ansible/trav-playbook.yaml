@@ -1,0 +1,62 @@
+# API playbook
+
+---
+- hosts: gw
+  remote_user: ops
+  become: yes
+  become_method: sudo
+  handlers:
+  - name: restart nginx
+    service: name=nginx state=restarted
+    # listen: "restart nginx"
+  tasks:
+  - name: Ensure nginx is installed and up to date
+    apt: name=nginx state=latest
+    # become: yes
+    # become_method: sudo
+  - name: Ensure nginx is running
+    service: name=nginx state=started
+    # become: yes
+    # become_method: sudo
+  - name: Install api.trav.phraction.org vserver config to sites-available
+    # become: yes
+    # become_method: sudo
+    copy:
+      src: /etc/ansible/files/api.trav.phraction.org
+      dest: /etc/nginx/sites-available/api.trav.phraction.org
+      owner: root 
+      group: root
+      mode: 0644
+  - name: Symlink api.trav.phraction.org vserver config to sites-enabled
+    # become: yes
+    # become_method: sudo
+    file:
+      src: /etc/nginx/sites-available/api.trav.phraction.org
+      dest: /etc/nginx/sites-enabled/api.trav.phraction.org
+      state: link
+    notify: "restart nginx"
+
+- hosts: api
+  remote_user: ops
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: Ensure python-pip is installed
+    apt: name=python-pip state=latest
+  - name: Ensure Docker is installed
+    apt:
+      name: docker-ce
+      state: latest
+  - name: Ensure docker-py is installed
+    pip: 
+      name: docker-py
+  - name:  api container
+    docker:
+      name: api
+      registry:  DockerHub
+      image: egor045/traveller_rest_api:latest
+      state: reloaded
+      pull: always
+      ports: 
+      - "127.0.0.1:8000:8000"
+      expose: 8000
