@@ -51,12 +51,11 @@
     pip: 
       name: docker-py
   - name:  api container
-    docker:
+    docker_container:
       name: api
-      registry:  DockerHub
       image: egor045/traveller_rest_api:latest
-      state: reloaded
-      pull: always
+      state: started
+      pull: no
       ports: 
       - "127.0.0.1:8000:8000"
       expose: 8000
