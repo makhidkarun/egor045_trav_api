@@ -1,6 +1,8 @@
 # .dockerignore
 
 tmp
+ansible
+doc
 venv*
 star.ods
 star.csv
