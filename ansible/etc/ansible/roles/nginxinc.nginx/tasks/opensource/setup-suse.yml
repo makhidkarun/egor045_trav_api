@@ -1,0 +1,12 @@
+---
+- name: "(Install: SUSE) Add Mainline NGINX Repository"
+  zypper_repository:
+    name: nginx
+    repo: https://nginx.org/packages/mainline/sles/12
+  when: branch == "mainline"
+
+- name: "(Install: SUSE) Add Stable NGINX Repository"
+  zypper_repository:
+    name: nginx
+    repo: https://nginx.org/packages/sles/12
+  when: branch == "stable"

@@ -1,0 +1,60 @@
+---
+# Specify which version of NGINX you want to install.
+# Options are 'opensource' or 'plus'.
+# Default is 'opensource'.
+type: opensource
+# Specify which branch of Open Source NGINX you want to install.
+# Options are 'mainline' or 'stable'.
+# Default is stable.
+branch: mainline
+# Install nginscript, perl and/or waf modules.
+# Default is false.
+modules:
+  njs: false
+  perl: false
+  waf: false
+# Install NGINX Amplify.
+# Use your NGINX Amplify API key.
+# Default is null.
+amplify: null
+# Enable NGINX status data.
+# Will enable 'stub_status' in open source NGINX and 'status' in NGINX Plus.
+# Default is false.
+status: false
+# Enable NGINX Plus REST API and dashboard.
+# Default is false for all three variables.
+api:
+  enable: false
+  write: false
+  dashboard: false
+# Location of your NGINX Plus license in your local machine.
+# Default is the files folder within the NGINX Ansible role.
+license:
+  certificate: license/nginx-repo.crt
+  key: license/nginx-repo.key
+# Location of the configuration files you wish to upload to NGINX.
+# Default is the files folder within the NGINX Ansible role.
+configuration_files:
+  enable: false
+  main: conf/nginx.conf
+  http: conf/http/*.conf
+# Configuration variables to create a templated NGINX configuration.
+# Defaults are the values found in a fresh NGINX installation.
+configuration_templates:
+  enable: false
+  opensource:
+    user: nginx
+    worker_processes: 1
+    error_level: warn
+    worker_connections: 1024
+    keepalive_timeout: 65
+    listen: 80
+    server_name: localhost
+  plus:
+    user: nginx
+    worker_processes: auto
+    error_level: notice
+    worker_connections: 1024
+    keepalive_timeout: 65
+    listen: 80
+    server_name: localhost
