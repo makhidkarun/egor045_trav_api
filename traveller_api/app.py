@@ -5,6 +5,7 @@ import traveller_api.ct as ct
 import traveller_api.misc as misc
 import traveller_api.mt as mt
 import traveller_api.t5.cargogen as t5_cargogen
+import traveller_api.t5.orbit as t5_orbit
 
 api = application = falcon.API()
 
@@ -39,3 +40,6 @@ api.add_route(
 # CT Cargogen API
 api.add_route('/ct/lbb2/cargogen/purchase', ct.lbb2.cargogen.Purchase())
 api.add_route('/ct/lbb2/cargogen/sale', ct.lbb2.cargogen.Sale())
+
+# T5 orbit API
+api.add_route('/t5/orbit/{orbit_number}', t5_orbit.Orbit())
