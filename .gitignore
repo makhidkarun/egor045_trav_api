@@ -13,3 +13,5 @@ dist
 *ods
 venv*
 .cache
+*.csv
+*.sqlite
