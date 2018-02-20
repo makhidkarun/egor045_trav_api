@@ -9,7 +9,8 @@ import falcon
 from .. import Config
 from .. import DB
 from .db import Schemas
-
+from traveller_api.util import parse_query_string
+from prometheus_client import Summary
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
@@ -18,30 +19,55 @@ KONFIG = Config()
 config = KONFIG.config['traveller_api.misc']
 
 
+REQUEST_TIME = Summary(
+    'request_processing_seconds',
+    'Time spent processing request')
+
+
 class AngDia(object):
     '''Angular diameter API'''
     # GET /misc/angdia/<distance>/<diameter>
     # Return ang_dia (deg), ang_dia (rad)
 
-    def on_get(self, req, resp, distance, diameter):
-        '''Return angular diameter of object diameter <diameter> at range <distance>
-        GET /misc/angdia/<distance>/<diameter>
+    @REQUEST_TIME.time()
+    def on_get(self, req, resp):
+        '''
+        Return angular diameter of object diameter <diameter>
+        at range <distance>
+        GET /misc/angdia?distance=<distance>&diameter=<diameter>
 
         Returns
         {
             "ang_dia_deg": <angular diameter (degrees)>,
-            "ang_dia_rad": <angular diameter (radians)>
+            "ang_dia_rad": <angular diameter (radians)>,
+            "diameter": <diameter>,
+            "distance": <distance>
         }
         '''
-        distance = float(distance)
-        diameter = float(diameter)
+        self.query_parameters = {
+            'distance': None,
+            'diameter': None
+        }
+        LOGGER.debug('query_string = %s', req.query_string)
+        self.query_parameters = parse_query_string(
+            req.query_string, self.query_parameters)
+        try:
+            distance = float(self.query_parameters['distance'])
+            diameter = float(self.query_parameters['diameter'])
+        except ValueError as err:
+            raise falcon.HTTPUnprocessableEntity(
+                title='Bad parameter value',
+                description='Invalid parameter in {}'.format(req.query_string))
+
         angdia_deg = round(
             atan2(diameter, distance) * 180 / pi, 3)
         angdia_rad = round(
-            atan2(diameter, distance))
+            atan2(diameter, distance), 3)
         doc = {
             'ang_dia_deg': angdia_deg,
-            'ang_dia_rad': angdia_rad
+            'ang_dia_rad': angdia_rad,
+            'diameter': diameter,
+            'distance': distance
         }
         resp.body = json.dumps(doc)
         resp.status = falcon.HTTP_200
@@ -60,7 +86,6 @@ class StarColor(object):
             'blue': None,
             'green': None
         }
-        self.clear_data()
         # Path
         sqlite_file = '{}/{}'.format(
             os.path.dirname(os.path.realpath(__file__)),
@@ -68,8 +93,10 @@ class StarColor(object):
         self.db = DB(sqlite_file)
         self.session = self.db.session()
 
-    def on_get(self, req, resp, code):
-        '''Return (R, G, B) colour for star of type <type><decimal><size
+    @REQUEST_TIME.time()
+    def on_get(self, req, resp):
+        '''
+        Return (R, G, B) colour for star of type <type><decimal><size
         GET /misc/starcolor/<code>
 
         Returns
@@ -78,14 +105,21 @@ class StarColor(object):
             "RGB": {"red": <red>, "blue": <blue>, "green": <green>}
         }
         '''
+        self.query_parameters = {
+            'code': None
+        }
+        LOGGER.debug('query_string = %s', req.query_string)
+        self.query_parameters = parse_query_string(
+            req.query_string, self.query_parameters)
         self.clear_data()
+        code = self.query_parameters['code']
         self._validate_code(code)
         try:
             assert self.code is not None
             assert self.code != ''
         except AssertionError:
             raise falcon.HTTPUnprocessableEntity(
-                title='Unprocessable request',
+                title='Bad parameter value {}'.format(code),
                 description='Invalid code {}'.format(code))
         self.get_details()
         doc = {
