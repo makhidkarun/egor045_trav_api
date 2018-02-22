@@ -5,3 +5,4 @@ requests
 sqlalchemy
 ehex
 T5_worldgen
+prometheus_client
