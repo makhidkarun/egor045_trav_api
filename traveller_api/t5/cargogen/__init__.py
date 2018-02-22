@@ -6,12 +6,17 @@ import falcon
 import re
 import logging
 from .trade_cargo import TradeCargo, TradeCargoBroker
+from prometheus_client import Histogram
 
 config = configparser.ConfigParser()
 config.read('t5.ini')
 uwp_validator = re.compile(r'[A-HX][0-9A-Z]{6}\-([0-9A-Z])')
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
+
+REQUEST_TIME = Histogram(
+    't5_cargogen_request_latency_seconds',
+    't5_cargogen latency')
 
 
 def validate_uwps(source_uwp, market_uwp):
@@ -28,11 +33,70 @@ def validate_uwps(source_uwp, market_uwp):
 class CargoGen(object):
     '''CargoGen'''
     @staticmethod
+    @REQUEST_TIME.time()
     def on_get(req, resp, source_uwp, market_uwp=None):
-        '''GET /t5/cargogen/source/<source_uwp>/dest/<dest_uwp>'''
+        '''
+        Return T5 cargo object
+        GET /t5/cargogen/source/<source_uwp>/market/<dest_uwp>'
+
+        Returns
+        {
+            "actual value": <actual_value>,
+            "actual value rolls": [ <av_roll1>, <av_roll2> ],
+            "cargo": <source TL>-<source TCs> Cr<cost> <description>
+            "cost": <cost>,
+            "description": <description>,
+            "market": {
+                "trade_codes": [ <market TC>, <market TC> ... ],
+                "uwp": <market UWP>
+            },
+            "price": <price>,
+            "source": {
+                "trade_codes": [ <source TC>, <source TC> ...],
+                "uwp": <source UWP>
+            },
+            "tech level": <source TL>
+        }
+
+        GET /t5/cargogen/source/<source_uwp>
+
+        returns
+        {
+            "cargo": <source TL>-<source TCs> Cr<cost> <description>,
+            "cost": <cost>,
+            "description": <description>,
+            "source": {
+                "trade_codes": [ <source TC>, <source TC> ...],
+                "uwp": <source UWP>
+            },
+            "tech level": <source TL>
+        }
+
+        where
+        - <source UWP>, <market UWP> are source world and market world UWPs
+        - <actual value> is the end price
+        - <av_roll1>, <av_roll2> are the Flux rolls used to
+          determine actual value
+        - <cost> is the purchase cost of the cargo
+        - <description> is the cargo description
+        - <market TC>, <source TC> are market world and source world
+          trade codes
+        - <source TL> is the source world's tech level
+        '''
+
         if validate_uwps(source_uwp, market_uwp):
             cargo = TradeCargo()
-            cargo.generate_cargo(source_uwp, market_uwp)
+            try:
+                cargo.generate_cargo(source_uwp, market_uwp)
+            except ValueError:
+                if market_uwp is None:
+                    error_desc = 'Invalid UWP in {}'.format(source_uwp)
+                else:
+                    error_desc = 'Invalid UWP in {}, {}'.format(
+                        source_uwp, market_uwp)
+                raise falcon.HTTPUnprocessableEntity(
+                    title='Bad source or market UWP',
+                    description=error_desc)
             doc = {
                 'source': {
                     'uwp': cargo.source_world.uwp(),
@@ -83,10 +147,62 @@ class CargoGen(object):
 class BrokerGen(object):
     '''CargoGen'''
     @staticmethod
+    @REQUEST_TIME.time()
     def on_get(req, resp, source_uwp, market_uwp=None, broker_skill=None):
-        '''GET /t5/cargogen/source/<source_uwp>/dest/<dest_uwp>'''
+        '''
+        Return T5 cargo object
+        GET /t5/cargogen/source/<source_uwp>/market/<dest_uwp>/broker/<skill>'
+
+        Returns
+        {
+            "actual value": <actual_value>,
+            "actual value rolls": [ <av_roll1>, <av_roll2> ],
+        "broker": {
+            "commission": <commission>,
+            "skill": <skill>
+        },
+
+            "cargo": <source TL>-<source TCs> Cr<cost> <description>
+            "cost": <cost>,
+            "description": <description>,
+            "market": {
+                "trade_codes": [ <market TC>, <market TC> ... ],
+                "uwp": <market UWP>
+            },
+            "price": <price>,
+            "source": {
+                "trade_codes": [ <source TC>, <source TC> ...],
+                "uwp": <source UWP>
+            },
+            "tech level": <source TL>
+        }
+
+        where
+        - <source UWP>, <market UWP> are source world and market world UWPs
+        - <actual value> is the gross end price (does not include commission)
+        - <av_roll1>, <av_roll2> are the Flux rolls used to
+          determine actual value
+        - <cost> is the purchase cost of the cargo
+        - <description> is the cargo description
+        - <market TC>, <source TC> are market world and source world
+          trade codes
+        - <source TL> is the source world's tech level
+        - <skill> is the broker's skill
+        - <commission> is the broker's commission
+        '''
+
         cargo = TradeCargoBroker()
-        cargo.generate_cargo(source_uwp, market_uwp, broker_skill)
+        try:
+            cargo.generate_cargo(source_uwp, market_uwp, broker_skill)
+        except ValueError:
+                if market_uwp is None:
+                    error_desc = 'Invalid UWP in {}'.format(source_uwp)
+                else:
+                    error_desc = 'Invalid UWP in {}, {}'.format(
+                        source_uwp, market_uwp)
+                raise falcon.HTTPUnprocessableEntity(
+                    title='Bad source or market UWP',
+                    description=error_desc)
         doc = {
             'source': {
                 'uwp': cargo.source_world.uwp(),
