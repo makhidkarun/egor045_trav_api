@@ -5,6 +5,7 @@ import logging
 from ...lbb3.worldgen.planet import System
 from .cargo import Cargo, CargoSale
 from .... import Config
+from prometheus_client import Histogram
 
 KONFIG = Config()
 config = KONFIG.config['traveller_api.ct.lbb2']
@@ -12,12 +13,17 @@ config = KONFIG.config['traveller_api.ct.lbb2']
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
+REQUEST_TIME = Histogram(
+    'ct_lbb2_cargogen_request_latency_seconds',
+    'ct_lbb2_cargogen latency')
+ 
 
 class Purchase(object):
     '''CT spec trade API - purchase'''
     # GET /ct/lbb2/cargogen/purchase?<options>
     # Return Cargo object
 
+    @REQUEST_TIME.time()
     def on_get(self, req, resp):
         '''GET /ct/lbb2/cargogen/purchase?<options>'''
         self.query_parameters = {
@@ -72,6 +78,7 @@ class Sale(object):
     # GET /ct/lbb2/cargogen/sale?<options>
     # Return CargoSale object
 
+    @REQUEST_TIME.time()
     def on_get(self, req, resp):
         '''GET /ct/lbb2/cargogen/sale?<options>'''
         self.query_parameters = {

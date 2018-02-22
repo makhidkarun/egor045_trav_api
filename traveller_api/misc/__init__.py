@@ -10,7 +10,7 @@ from .. import Config
 from .. import DB
 from .db import Schemas
 from traveller_api.util import parse_query_string
-from prometheus_client import Summary
+from prometheus_client import Histogram
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
@@ -19,9 +19,9 @@ KONFIG = Config()
 config = KONFIG.config['traveller_api.misc']
 
 
-REQUEST_TIME = Summary(
-    'request_processing_seconds',
-    'Time spent processing request')
+REQUEST_TIME = Histogram(
+    'misc_request_latency_seconds',
+    'misc latency')
 
 
 class AngDia(object):
