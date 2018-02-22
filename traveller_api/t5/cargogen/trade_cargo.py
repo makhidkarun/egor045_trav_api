@@ -195,7 +195,10 @@ class TradeCargo(object):
 
     def generate_cargo(self, source_uwp, market_uwp=None):
         '''Generate cargo'''
-        self.source_world._load_uwp(source_uwp)
+        try:
+            self.source_world._load_uwp(source_uwp)
+        except ValueError:
+            raise ValueError('Invalid source UWP')
         self.source_world.mainworld_type = None
         self.source_world.determine_trade_codes()
         self.description = self.select_cargo_name()
@@ -204,7 +207,10 @@ class TradeCargo(object):
 
         if market_uwp is not None:
             self.market_world = Planet()
-            self.market_world._load_uwp(market_uwp)
+            try:
+                self.market_world._load_uwp(market_uwp)
+            except ValueError:
+                raise ValueError('Invalid market UWP')
             self.market_world.mainworld_type = None
             self.market_world.determine_trade_codes()
             self.determine_price()
@@ -407,27 +413,10 @@ class TradeCargoBroker(TradeCargo):
 
     def generate_cargo(self, source_uwp, market_uwp=None, broker_skill=None):
         '''Overload generate_cargo() to include broker_skill'''
-        LOGGER.debug('Source UWP = %s', source_uwp)
-        LOGGER.debug('Market UWP = %s', market_uwp)
-        LOGGER.debug('Broker skill = %s', broker_skill)
-        self.source_world._load_uwp(source_uwp)
-        self.source_world.mainworld_type = None
-        self.source_world.determine_trade_codes()
-        self.description = self.select_cargo_name()
-        self.determine_cost(self.source_world.trade_codes)
-        self.add_detail(self.source_world.trade_codes)
-
         if broker_skill is not None:
             self.broker_skill = int(broker_skill)
         LOGGER.debug('self.broker_skill = %s', self.broker_skill)
-
-        if market_uwp is not None:
-            self.validate_uwp(market_uwp)
-            self.market_world = Planet()
-            self.market_world._load_uwp(market_uwp)
-            self.market_world.mainworld_type = None
-            self.market_world.determine_trade_codes()
-            self.determine_price()
+        super(TradeCargoBroker, self).generate_cargo(source_uwp, market_uwp)
 
     def determine_actual_value(self, modifier=0):
         '''Overload determine_actual_value to include DM'''
