@@ -1,5 +1,7 @@
 '''test_planet.py'''
 
+# pylint: disable=E402
+
 import unittest
 import sys
 import os

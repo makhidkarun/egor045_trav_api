@@ -10,7 +10,6 @@ sys.path.insert(
     os.path.dirname(os.path.abspath(__file__)) + '/../')
 from traveller_api.app import api
 
-
 @pytest.fixture
 def client():
     '''API test client'''

@@ -1,5 +1,7 @@
 '''test_basic_api.py'''
 
+# pylint: disable=E402
+
 import falcon
 from falcon import testing
 import pytest

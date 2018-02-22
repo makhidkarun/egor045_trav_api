@@ -21,9 +21,13 @@ def test_angdia_valid(client):
     '''Test result of valid misc/angdia API call'''
     expected_result = {
         "ang_dia_deg": 36.87,
-        "ang_dia_rad": 1
+        "ang_dia_rad": 0.644,
+        'diameter': 3.0,
+        'distance': 4.0
     }
-    resp = client.simulate_get('/misc/angdia/4/3')
+    resp = client.simulate_get(
+        '/misc/angdia',
+        query_string='distance=4&diameter=3')
 
     assert expected_result == resp.json
     assert resp.status == falcon.HTTP_200

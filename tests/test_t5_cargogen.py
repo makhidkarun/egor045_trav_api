@@ -1,5 +1,7 @@
 '''test_t5_cargogen.py'''
 
+# pragma pylint: disable=relative-beyond-top-level
+
 import falcon
 from falcon import testing
 import pytest

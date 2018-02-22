@@ -1,5 +1,7 @@
 '''test_ct_lbb2_cargo.py'''
 
+# pylint: disable=E402
+
 import unittest
 import sys
 import os

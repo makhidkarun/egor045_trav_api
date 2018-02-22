@@ -10,6 +10,7 @@ import os
 sys.path.insert(
     0,
     os.path.dirname(os.path.abspath(__file__)) + '/../')
+print(sys.path)
 from traveller_api.app import api
 from traveller_api.util import parse_query_string
 

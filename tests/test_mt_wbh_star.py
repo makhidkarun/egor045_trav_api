@@ -1,10 +1,12 @@
 ''' test_star.py'''
 
-import falcon
-from falcon import testing
+# pragma pylint: disable=relative-beyond-top-level
+
 import pytest
 import sys
 import os
+import falcon
+from falcon import testing
 sys.path.insert(
     0,
     os.path.dirname(os.path.abspath(__file__)) + '/../')
