@@ -1,8 +1,8 @@
-# API playbook
+# API playbook - single host with gw and api container
 
 ---
-- hosts: gw
-  remote_user: ops
+- hosts: tag_role_gw_api tag_role_gw
+  remote_user: ubuntu
   become: yes
   become_method: sudo
   handlers:
@@ -10,6 +10,11 @@
     service: name=nginx state=restarted
     # listen: "restart nginx"
   tasks:
+  - name: Add ufw ssh permit rule
+    ufw:
+      rule: allow
+      name: OpenSSH
+
   - name: Ensure nginx is installed and up to date
     apt: name=nginx state=latest
     # become: yes
@@ -35,9 +40,22 @@
       dest: /etc/nginx/sites-enabled/api.trav.phraction.org
       state: link
     notify: "restart nginx"
+  - name: Add UFW Nginx Full rule
+    ufw:
+      rule: allow
+      name: "Nginx Full"
 
-- hosts: api
-  remote_user: ops
+  - name: Install Certbot repo
+    apt_repository:
+      repo: "ppa:certbot/certbot"
+      state: present
+  - name: Install Certbot
+    apt:
+      name: python-certbot-nginx
+      state: latest
+
+- hosts: tag_role_gw_api tag_role_api
+  remote_user: ubuntu
   become: yes
   become_method: sudo
   tasks:
@@ -47,27 +65,30 @@
       state: present
   - name: Ensure Docker CE repo is available to apt
     apt_repository:
-      repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+      repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable"
       state: present
       update_cache: yes
+
   - name: Ensure python-pip is installed
     apt: name=python-pip state=latest
   - name: Ensure Docker is installed
     apt:
       name: docker-ce
       state: latest
-  - name: Ensure ops user is in docker group
-    name: ubuntu
-    groups: docker
+  - name: Ensure ubuntu user is in docker group
+    user: 
+      name: ubuntu
+      groups: docker
   - name: Ensure docker-py is installed
     pip: 
       name: docker-py
+
   - name:  api container
     docker_container:
       name: api
       image: egor045/traveller_rest_api:latest
       state: started
-      pull: no
+      pull: yes
       ports: 
       - "127.0.0.1:8000:8000"
       expose: 8000
