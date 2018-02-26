@@ -343,7 +343,7 @@ class TradeCargo(object):
         }
         self.price = 5000
         # Market trade codes
-        for trade_code in self.market_world.trade_codes:
+        for trade_code in self.source_world.trade_codes:
             if trade_code in market_mods.keys():
                 for code in market_mods[trade_code][0]:
                     LOGGER.debug(
