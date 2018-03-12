@@ -12,7 +12,7 @@ class Orbit(object):
             10.0, 20.0, 40.0, 77.0,
             154.0, 308.0, 615.0,
             1230.0, 2458.0, 4916.0, 9830.0,
-            19500.0     # Fits table on T5.09 Core p.684
+            19500.0, 39500.0, 78700.0     # Fits table on T5.09 Core p.684
         ]
         try:
             self.orbit_number = float(orbit_number)
@@ -21,7 +21,7 @@ class Orbit(object):
                 'Invalid type for orbit_number {}'.format(str(orbit_number)))
         try:
             assert self.orbit_number >= 0
-            assert self.orbit_number <= 17.9
+            assert self.orbit_number <= 19.0
         except AssertionError:
             raise ValueError(
                 'Orbit number {} out of range'.format(self.orbit_number))
