@@ -3,8 +3,8 @@
 import re
 import json
 import logging
-from ...util import Die
 from ehex import ehex
+from ...util import Die     # noqa
 
 D6 = Die(6)
 
@@ -13,7 +13,7 @@ LOGGER.setLevel(logging.DEBUG)
 
 
 class System(object):
-    '''Planet class'''
+    '''System class'''
 
     valid_uwp = re.compile(
         r'^([A-EX])([0-9A-Z])([0-9A-Z])' +
@@ -235,7 +235,7 @@ class System(object):
                 int(self.hydrographics) <= 3):
             self.trade_codes.append('Po')
 
-    def _determine_trade_codes_environment(self):
+    def _determine_trade_codes_environment(self):   # noqa
         '''Determine environment trade codes'''
         # Wa
         if int(self.hydrographics) == 10:

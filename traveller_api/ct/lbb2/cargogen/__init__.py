@@ -1,11 +1,11 @@
 '''ct/lbb2/cargogen/__init__.py'''
 
-import falcon
 import logging
-from ...lbb3.worldgen.planet import System
+import falcon
+from prometheus_client import Histogram
+from ...lbb3.worldgen.planet import System  # noqa
 from .cargo import Cargo, CargoSale
 from .... import Config
-from prometheus_client import Histogram
 
 KONFIG = Config()
 config = KONFIG.config['traveller_api.ct.lbb2']
@@ -16,7 +16,7 @@ LOGGER.setLevel(logging.DEBUG)
 REQUEST_TIME = Histogram(
     'ct_lbb2_cargogen_request_latency_seconds',
     'ct_lbb2_cargogen latency')
- 
+
 
 class Purchase(object):
     '''CT spec trade API - purchase'''
