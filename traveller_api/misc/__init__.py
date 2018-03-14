@@ -25,25 +25,23 @@ REQUEST_TIME = Histogram(
 
 
 class AngDia(object):
-    '''Angular diameter API'''
-    # GET /misc/angdia/<distance>/<diameter>
-    # Return ang_dia (deg), ang_dia (rad)
+    '''
+    Return angular diameter of object diameter <diameter>
+    at range <distance>
+    GET /misc/angdia?distance=<distance>&diameter=<diameter>
+
+    Returns
+    {
+        "ang_dia_deg": <angular diameter (degrees)>,
+        "ang_dia_rad": <angular diameter (radians)>,
+        "diameter": <diameter>,
+        "distance": <distance>
+    }
+    '''
 
     @REQUEST_TIME.time()
     def on_get(self, req, resp):
-        '''
-        Return angular diameter of object diameter <diameter>
-        at range <distance>
-        GET /misc/angdia?distance=<distance>&diameter=<diameter>
-
-        Returns
-        {
-            "ang_dia_deg": <angular diameter (degrees)>,
-            "ang_dia_rad": <angular diameter (radians)>,
-            "diameter": <diameter>,
-            "distance": <distance>
-        }
-        '''
+        '''GET /misc/angdia?distance=<distance>&diameter=<diameter>'''
         self.query_parameters = {
             'distance': None,
             'diameter': None

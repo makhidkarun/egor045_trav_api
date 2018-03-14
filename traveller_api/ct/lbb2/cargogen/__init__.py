@@ -19,9 +19,52 @@ REQUEST_TIME = Histogram(
 
 
 class Purchase(object):
-    '''CT spec trade API - purchase'''
-    # GET /ct/lbb2/cargogen/purchase?<options>
-    # Return Cargo object
+    '''
+    Return CT LBB2 cargo object
+    GET /ct/lbb2/cargogen/purchase?<options>
+
+    Options:
+    - source_uwp: UWP of source world
+    - source_tc: Trade classification of source world (may be repeated)
+    - population: Population of source world
+
+    If source_uwp is specified, trade codes and population from that UWP take
+    precedence over any source_tc or population specified as options.source_uwp
+
+    Examples:
+    - GET /ct/lbb2/cargogen/purchase?source_uwp=C776989-A
+    - GET /ct/lbb2/cargogen/purchase?source_tc=In&source_tc=Ri&population=9
+
+    Returns
+    {
+        "actual_lot_price": <actual lot price>,
+        "actual_unit_price": <actual unit price>,
+        "base_price": <base price>,
+        "id": <cargo id>,
+        "name": <cargo description>,
+        "purchase_dms": {
+            <trade classificaton>: <purchase DM>, ...
+        },
+        "quantity": <lot size>,
+        "resale_dms": {
+            <trade classification>: <resale DM>, ...
+        },
+        "trade_codes": [
+            <trade classification>, ....
+        ]
+    }
+
+    where
+    - <actual lot price> is <actual unit price> * <lot size>
+    - <actual unit price> is <base price> modifief by actual value roll
+        (using purchase DMs)
+    - <base price> is base unit price of cargo
+    - <id> (string) is ID of randomly-selected cargo
+    - <cargo description> is the name/description of the selected cargo
+    - <trade classification> is one of the standard Traveller trade codes
+    - <purchase DM> is the cargo's purchase DM for the specified trade code
+    - <resale DM> is the cargo's resale DM for the specified trade code
+    '''
 
     @REQUEST_TIME.time()
     def on_get(self, req, resp):
@@ -74,9 +117,63 @@ class Purchase(object):
 
 
 class Sale(object):
-    '''CT spec trade API -- sale'''
-    # GET /ct/lbb2/cargogen/sale?<options>
-    # Return CargoSale object
+    '''
+    Return CT LBB2 cargo sale object
+    GET /ct/lbb2/cargogen/sale?<options>
+
+    Options:
+    - cargo: cargo ID (from table) or description (from table)
+    - market_uwp: UWP of market world
+    - market_tc: Trade classification of market world (may be repeated)
+    - admin: Admin skill available for sale (optional)
+    - bribery: Bribery skill available for sale (optional)
+    - broker: Broker skill available for sale (optional)
+    - quantity: Lot size
+
+    If market_uwp is specified, trade codes from that UWP take
+    precedence over any market_tc specified as options.
+
+    Examples:
+    - GET /ct/lbb2/cargogen/sale?cargp=64&quantity=10
+    - GET /ct/lbb2/cargogen/sale?cargp=64&quantity=10&market_tc=In&market_tc=Ri
+
+    Returns
+    {
+        "actual_gross_lot_price": <gross lot price>,
+        "actual_gross_unit_price": <gross unit price>,
+        "actual_net_lot_price": <net lot price>,
+        "actual_net_unit_price": <net unit price>,
+        "admin": <admin skill level>,
+        "base_price": <base price>,
+        "bribery": <bribery skill level>,
+        "broker": <broker skill level>,
+        "commission": <broker's commission>,
+        "id": <cargo id>,
+        "name": <cargo description>,
+        "quantity": <lot size>,
+        "trade_codes": [ <trade classification>, ...]
+    }
+
+    where
+    - <gross lot price> is <gross unit price> * <lot size>
+    - <gross unit price> is <base price> modified by actual value table roll
+        and market world trade classifications
+    - <net lot price> is <gross lot price> less broker's commission
+    - <net unit price> is <gorss unit price> less broker's commission
+    - <admin skill level> is Admin skill level used in the sale (supplied in
+        options)
+    - <bribery skill level> is Bribery skill level used in the sale (supplied
+        in options)
+    - <broker skill level> is Broker skill level used in the sale (supplied in
+        options)
+    - <commission> is broker's commission, based on <broker skill level>
+    - <id> is cargo ID corresponding to <cargo> (supplied in options)
+    - <name> is cargo name/description corresponding to <cargo> (supplied in
+        options)
+    - <lot size> is <quantity> (supplied in options)
+    - <trade classificattion> is market world trade code, either supplied in
+        options or derived from market uWP
+    '''
 
     @REQUEST_TIME.time()
     def on_get(self, req, resp):
