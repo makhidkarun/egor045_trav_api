@@ -16,3 +16,4 @@ venv*
 *.csv
 *.sqlite
 .pytest_cache/
+*.sublime-*
