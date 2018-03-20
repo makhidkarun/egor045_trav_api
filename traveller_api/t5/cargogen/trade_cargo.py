@@ -196,7 +196,7 @@ class TradeCargo(object):
     def generate_cargo(self, source_uwp, market_uwp=None):
         '''Generate cargo'''
         try:
-            self.source_world._load_uwp(source_uwp)
+            self.source_world._load_uwp(source_uwp)     # noqa
         except ValueError:
             raise ValueError('Invalid source UWP')
         self.source_world.mainworld_type = None
@@ -208,7 +208,7 @@ class TradeCargo(object):
         if market_uwp is not None:
             self.market_world = Planet()
             try:
-                self.market_world._load_uwp(market_uwp)
+                self.market_world._load_uwp(market_uwp)     # noqa
             except ValueError:
                 raise ValueError('Invalid market UWP')
             self.market_world.mainworld_type = None
