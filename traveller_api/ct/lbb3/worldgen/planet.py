@@ -198,7 +198,7 @@ class System(object):
         '''Determine trade codes'''
         self.trade_codes = []
         self._determine_trade_codes_economic()
-        self._determine_trade_codes_environment()
+        self._determine_trade_codes_env()
         LOGGER.debug('trade codes = %s', self.trade_codes)
 
     def _determine_trade_codes_economic(self):
@@ -235,7 +235,7 @@ class System(object):
                 int(self.hydrographics) <= 3):
             self.trade_codes.append('Po')
 
-    def _determine_trade_codes_environment(self):   # noqa
+    def _determine_trade_codes_env(self):   # noqa
         '''Determine environment trade codes'''
         # Wa
         if int(self.hydrographics) == 10:

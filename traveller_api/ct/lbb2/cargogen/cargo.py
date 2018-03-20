@@ -3,8 +3,9 @@
 import re
 import json
 import logging
-from ...util import Die
 from ehex import ehex
+from ...util import Die
+
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
@@ -279,17 +280,20 @@ class Cargo(object):
         self.quantity = self.determine_quantity(
             self._trade_goods[cargo_id]['quantity'])
 
-    def determine_quantity(self, quantity_string):
+    @staticmethod
+    def determine_quantity(quantity_string):
         '''Determine lot size'''
+        resp = 0
         if 'Dx' in quantity_string:
             match = RE_QUANTITY_X.match(quantity_string)
             if match:
-                return int(
+                resp = int(
                     D6.roll(int(match.group(1))) * int(match.group(2)))
         else:
             match = RE_QUANTITY.match(quantity_string)
             if match:
-                return int(D6.roll(int(match.group(1))))
+                resp = int(D6.roll(int(match.group(1))))
+        return resp
 
     def determine_actual_unit_price(self):
         '''Determine actual unit price'''

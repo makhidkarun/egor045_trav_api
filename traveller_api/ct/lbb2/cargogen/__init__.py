@@ -175,6 +175,9 @@ class Sale(object):
         options or derived from market uWP
     '''
 
+    def __init__(self):
+        self.query_parameters = {}
+
     @REQUEST_TIME.time()
     def on_get(self, req, resp):
         '''GET /ct/lbb2/cargogen/sale?<options>'''
