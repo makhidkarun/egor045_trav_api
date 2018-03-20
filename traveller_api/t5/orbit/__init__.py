@@ -1,9 +1,9 @@
 '''__init__.py'''
 
-import falcon
 import logging
-from .orbit import Orbit as CalcOrbit
+import falcon
 from prometheus_client import Histogram
+from .orbit import Orbit as CalcOrbit
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
