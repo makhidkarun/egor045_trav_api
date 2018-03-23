@@ -386,7 +386,7 @@ class CargoSale(Cargo):
     def find_cargo(self, cargo):
         '''Find cargo (may be name or id), set ID and name'''
         if cargo is None:
-            raise ValueError('cargo ID/name cannot be None')
+            raise ValueError('cargo parameter (cargo ID/name) cannot be None')
         else:
             cargo = str(cargo)
         if RE_ID.match(cargo):
@@ -412,7 +412,7 @@ class CargoSale(Cargo):
                     self.base_price = \
                         self._trade_goods[cargo_id]['base_price']
             if not is_valid:
-                raise ValueError('cargo')
+                raise ValueError('cargo {} not known'.format(cargo))
 
     def _determine_actual_unit_price(self):
         '''Determine actual sale price'''

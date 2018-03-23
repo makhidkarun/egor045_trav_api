@@ -6,6 +6,7 @@ from prometheus_client import Histogram
 from ...lbb3.worldgen.planet import System  # noqa
 from .cargo import Cargo, CargoSale
 from .... import Config
+from ....util import parse_query_string
 
 KONFIG = Config()
 config = KONFIG.config['traveller_api.ct.lbb2']
@@ -75,7 +76,7 @@ class Purchase(object):
             'population': None
         }
         LOGGER.debug('query_string = %s', req.query_string)
-        self.parse_query_string(req.query_string)
+        parse_query_string(req.query_string, self.query_parameters)
         for param in self.query_parameters:
             LOGGER.debug(
                 'param %s = %s',
@@ -88,7 +89,13 @@ class Purchase(object):
             LOGGER.debug(
                 'Using souce_uwp %s',
                 self.query_parameters['source_uwp'])
-            planet = System(uwp=self.query_parameters['source_uwp'])
+            try:
+                planet = System(uwp=self.query_parameters['source_uwp'])
+            except TypeError as err:
+                raise falcon.HTTPError(
+                    title='Invalid UWP',
+                    status='400 Invalid UWP',
+                    description=str(err))
             trade_codes = planet.trade_codes
             self.query_parameters['population'] = planet.population
         LOGGER.debug('trade codes = %s', trade_codes)
@@ -98,7 +105,7 @@ class Purchase(object):
         resp.body = cargo.json()
         resp.status = falcon.HTTP_200
 
-    def parse_query_string(self, query_string):
+    """def parse_query_string(self, query_string):
         '''Parse options'''
         # options format: option1=value1&option2=value2 ...'
         if query_string != '':
@@ -113,7 +120,7 @@ class Purchase(object):
                 else:
                     raise falcon.HTTPUnprocessableEntity(
                         title='Unprocessable request',
-                        description='Unknown parameter {}'.format(param))
+                        description='Unknown parameter {}'.format(param))"""
 
 
 class Sale(object):
@@ -191,7 +198,7 @@ class Sale(object):
             'quantity': 0
         }
         LOGGER.debug('query_string = %s', req.query_string)
-        self.parse_query_string(req.query_string)
+        parse_query_string(req.query_string, self.query_parameters)
 
         try:
             cargo = CargoSale(
@@ -202,13 +209,14 @@ class Sale(object):
                 broker=self.query_parameters['broker'],
                 trade_codes=self.determine_trade_codes())
         except ValueError as err:
-            raise falcon.HTTPInvalidParam(
-                msg='query_string: {}'.format(req.query_string),
-                param_name=str(err))
+            raise falcon.HTTPError(
+                title='Invalid parameter',
+                status='400 Bad Request',
+                description=str(err))
         resp.body = cargo.json()
         resp.status = falcon.HTTP_200
 
-    def parse_query_string(self, query_string):
+    """def parse_query_string(self, query_string):
         '''Parse query string'''
         if query_string != '':
             options_list = query_string.split('&')
@@ -222,7 +230,7 @@ class Sale(object):
                 else:
                     raise falcon.HTTPUnprocessableEntity(
                         title='Unprocessable request',
-                        description='Unknown parameter {}'.format(param))
+                        description='Unknown parameter {}'.format(param))"""
 
     def determine_trade_codes(self):
         '''Determine trade codes from either market_tc or market_uwp'''
