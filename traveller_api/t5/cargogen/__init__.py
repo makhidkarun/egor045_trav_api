@@ -86,64 +86,27 @@ class CargoGen(object):
         GET /t5/cargogen/source/<source_uwp>/market/<dest_uwp>
         GET /t5/cargogen/source/<source_uwp>'''
 
-        if validate_uwps(source_uwp, market_uwp):
-            cargo = TradeCargo()
-            try:
-                cargo.generate_cargo(source_uwp, market_uwp)
-            except ValueError:
-                if market_uwp is None:
-                    error_desc = 'Invalid UWP in {}'.format(source_uwp)
-                else:
-                    error_desc = 'Invalid UWP in {}, {}'.format(
-                        source_uwp, market_uwp)
-                raise falcon.HTTPUnprocessableEntity(
-                    title='Bad source or market UWP',
-                    description=error_desc)
-            doc = {
-                'source': {
-                    'uwp': cargo.source_world.uwp(),
-                    'trade_codes': cargo.source_world.trade_codes
-                },
-                'cargo': str(cargo),
-                'cost': cargo.cost,
-                'description': cargo.description,
-                'tech level': int(cargo.source_world.tech_level)
+        cargo = TradeCargo()
+        try:
+            cargo.generate_cargo(source_uwp, market_uwp)
+        except ValueError as err:
+            raise falcon.HTTPError(
+                title='Invalid UWP',
+                status='400 Invalid universal world profile',
+                description=str(err))
+        doc = {
+            'source': {
+                'uwp': cargo.source_world.uwp(),
+                'trade_codes': cargo.source_world.trade_codes
+            },
+            'cargo': str(cargo),
+            'cost': cargo.cost,
+            'description': cargo.description,
+            'tech level': int(cargo.source_world.tech_level)
 
-            }
-            resp.body = json.dumps(doc)
-            resp.status = falcon.HTTP_200
-        else:
-            if market_uwp is None:
-                doc = {
-                    'message': 'Invalid UWP in {}'.format(source_uwp)
-                }
-            else:
-                doc = {
-                    'message': 'Invalid UWP in {} {}'.format(
-                        source_uwp, market_uwp)
-                }
-            resp.body = json.dumps(doc)
-            resp.status = falcon.HTTP_400
-
-        if market_uwp is not None:
-            if uwp_validator.match(market_uwp):
-                LOGGER.debug('Market UWP %s valid', market_uwp)
-                doc['market'] = {
-                    'uwp': cargo.market_world.uwp(),
-                    'trade_codes': cargo.market_world.trade_codes
-                }
-                doc['price'] = cargo.price
-                doc['actual value'] = cargo.actual_value
-                doc['actual value rolls'] = cargo.actual_value_rolls
-
-                resp.body = json.dumps(doc)
-                resp.status = falcon.HTTP_200
-            else:
-                doc = {
-                    'message': 'Invalid market UWP {}'.format(market_uwp)
-                }
-                resp.body = json.dumps(doc)
-                resp.status = falcon.HTTP_400
+        }
+        resp.body = json.dumps(doc)
+        resp.status = falcon.HTTP_200
 
 
 class BrokerGen(object):
@@ -196,15 +159,11 @@ class BrokerGen(object):
         cargo = TradeCargoBroker()
         try:
             cargo.generate_cargo(source_uwp, market_uwp, broker_skill)
-        except ValueError:
-            if market_uwp is None:
-                error_desc = 'Invalid UWP in {}'.format(source_uwp)
-            else:
-                error_desc = 'Invalid UWP in {}, {}'.format(
-                    source_uwp, market_uwp)
-            raise falcon.HTTPUnprocessableEntity(
-                title='Bad source or market UWP',
-                description=error_desc)
+        except ValueError as err:
+            raise falcon.HTTPError(
+                title='Invalid UWP',
+                status='400 Invalid universal world profile',
+                description=str(err))
         doc = {
             'source': {
                 'uwp': cargo.source_world.uwp(),

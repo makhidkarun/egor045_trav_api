@@ -198,7 +198,7 @@ class TradeCargo(object):
         try:
             self.source_world._load_uwp(source_uwp)     # noqa
         except ValueError:
-            raise ValueError('Invalid source UWP')
+            raise ValueError('Invalid source UWP {}'.format(source_uwp))
         self.source_world.mainworld_type = None
         self.source_world.determine_trade_codes()
         self.description = self.select_cargo_name()
@@ -210,7 +210,7 @@ class TradeCargo(object):
             try:
                 self.market_world._load_uwp(market_uwp)     # noqa
             except ValueError:
-                raise ValueError('Invalid market UWP')
+                raise ValueError('Invalid market UWP {}'.format(market_uwp))
             self.market_world.mainworld_type = None
             self.market_world.determine_trade_codes()
             self.determine_price()
