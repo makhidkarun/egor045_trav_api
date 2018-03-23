@@ -53,9 +53,10 @@ class AngDia(object):
             distance = float(self.query_parameters['distance'])
             diameter = float(self.query_parameters['diameter'])
         except ValueError as err:
-            raise falcon.HTTPUnprocessableEntity(
-                title='Bad parameter value',
-                description='Invalid parameter in {}'.format(req.query_string))
+            raise falcon.HTTPError(
+                title='Invalid parameter',
+                status='400 Invalid parameter',
+                description=str(err))
 
         angdia_deg = round(
             atan2(diameter, distance) * 180 / pi, 3)
@@ -72,9 +73,15 @@ class AngDia(object):
 
 
 class StarColor(object):
-    '''Star color API
-    GET /misc/starcolor/<code>
-    Return (r, G, B) corresponding to star color'''
+    '''Return (R, G, B) colour for star of type <type><decimal><size
+        GET /misc/starcolor?code=<code>
+
+        Returns
+        {
+            "code": <code>,
+            "RGB": {"red": <red>, "blue": <blue>, "green": <green>}
+        }
+        '''
     # See star_color.sqlite for RGB
 
     def __init__(self):
@@ -93,16 +100,7 @@ class StarColor(object):
 
     @REQUEST_TIME.time()
     def on_get(self, req, resp):
-        '''
-        Return (R, G, B) colour for star of type <type><decimal><size
-        GET /misc/starcolor/<code>
-
-        Returns
-        {
-            "code": <code>,
-            "RGB": {"red": <red>, "blue": <blue>, "green": <green>}
-        }
-        '''
+        ''' GET /misc/starcolor?code=<code>'''
         self.query_parameters = {
             'code': None
         }
@@ -116,9 +114,10 @@ class StarColor(object):
             assert self.code is not None
             assert self.code != ''
         except AssertionError:
-            raise falcon.HTTPUnprocessableEntity(
-                title='Bad parameter value {}'.format(code),
-                description='Invalid code {}'.format(code))
+            raise falcon.HTTPError(
+                title='Bad paramter value {}'.format(code),
+                description='Invalid code {}'.format(code),
+                status='400 Invalid code')
         self.get_details()
         doc = {
             'code': self.code,
