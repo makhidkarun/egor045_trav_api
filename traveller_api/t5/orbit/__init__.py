@@ -32,12 +32,14 @@ class Orbit(object):
         try:
             orbit = CalcOrbit(orbit_number)
         except TypeError as err:
-            raise falcon.HTTPInvalidParam(
-                msg='orbit_number: {}'.format(orbit_number),
-                param_name=str(err))
+            raise falcon.HTTPError(
+                title='Invalid type',
+                status='400 Invalid parameter',
+                description=str(err))
         except ValueError as err:
-            raise falcon.HTTPInvalidParam(
-                msg='orbit_number: {}'.format(orbit_number),
-                param_name=str(err))
+            raise falcon.HTTPError(
+                title='Value out of range',
+                status='400 Invalid parameter',
+                description=str(err))
         resp.body = orbit.json()
         resp.status = falcon.HTTP_200

@@ -32,9 +32,10 @@ def parse_query_string(query_string='', valid_query_parameters={}):
                 else:
                     query_parameters[param] = value
             else:
-                raise falcon.HTTPInvalidParam(
-                    msg='Invalid parameter',
-                    param_name=param)
+                raise falcon.HTTPError(
+                    title='Invalid parameter',
+                    status='400 Invalid parameter',
+                    description='Invalid parameter "{}"'.format(param))
     return query_parameters
 
 
