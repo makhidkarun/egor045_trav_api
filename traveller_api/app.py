@@ -7,6 +7,7 @@ import traveller_api.mt as mt
 import traveller_api.t5.cargogen as t5_cargogen
 import traveller_api.t5.orbit as t5_orbit
 import traveller_api.util as util
+import traveller_api.error_handler as error_handler
 
 api = application = falcon.API()
 
@@ -54,3 +55,6 @@ api.add_route('/misc/starcolour', misc.StarColor())
 
 # Metrics
 api.add_route('/metrics', util.Metrics())
+
+# Testing error handler
+api.add_route('/error_handler/{strng}', error_handler.Foo())
