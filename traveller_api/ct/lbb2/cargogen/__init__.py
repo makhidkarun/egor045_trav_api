@@ -53,7 +53,8 @@ class Purchase(RequestProcessor):
         },
         "trade_codes": [
             <trade classification>, ....
-        ]
+        ],
+        "units": <units>
     }
 
     where
@@ -66,6 +67,7 @@ class Purchase(RequestProcessor):
     - <trade classification> is one of the standard Traveller trade codes
     - <purchase DM> is the cargo's purchase DM for the specified trade code
     - <resale DM> is the cargo's resale DM for the specified trade code
+    - <units> is the unit for quantity - either tons or blank
     '''
 
     @REQUEST_TIME.time()
@@ -167,7 +169,8 @@ class Sale(RequestProcessor):
         "id": <cargo id>,
         "name": <cargo description>,
         "quantity": <lot size>,
-        "trade_codes": [ <trade classification>, ...]
+        "trade_codes": [ <trade classification>, ...],
+        "units": <units>
     }
 
     where
@@ -188,7 +191,8 @@ class Sale(RequestProcessor):
         options)
     - <lot size> is <quantity> (supplied in options)
     - <trade classificattion> is market world trade code, either supplied in
-        options or derived from market uWP
+        options or derived from market UWP
+    - <units> is the unit for quantity - either tons or blank
     '''
 
     def __init__(self):

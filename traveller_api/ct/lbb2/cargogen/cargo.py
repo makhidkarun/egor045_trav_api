@@ -31,10 +31,12 @@ class Cargo(object):
         self.actual_unit_price = 0
         self.actual_lot_price = 0
         self.trade_codes = trade_codes
+        self.units = ''
 
         self.select_cargo(population)
         self.determine_actual_unit_price()
         self.actual_lot_price = self.actual_unit_price * self.quantity
+        self.set_units()
 
     def _populate_trade_goods(self):
         '''Populate _trade_goods dict'''
@@ -279,6 +281,11 @@ class Cargo(object):
         self.resale_dms = self._trade_goods[cargo_id]['resale_dms']
         self.quantity = self.determine_quantity(
             self._trade_goods[cargo_id]['quantity'])
+    
+    def set_units(self):
+        '''Set units - cargo ID in range 51-56 => individual, tons otherwise'''
+        if self.id[0] in '12346':
+            self.units = 'tons'
 
     @staticmethod
     def determine_quantity(quantity_string):
@@ -317,7 +324,8 @@ class Cargo(object):
             'quantity': self.quantity,
             'actual_unit_price': self.actual_unit_price,
             'actual_lot_price': self.actual_lot_price,
-            'trade_codes': self.trade_codes
+            'trade_codes': self.trade_codes,
+            'units': self.units
         }
         return json.dumps(doc)
 
@@ -357,6 +365,7 @@ class CargoSale(Cargo):
         self.actual_net_unit_price = 0
         self.actual_net_lot_price = 0
         self.commission = 0
+        self.units = ''
 
         try:
             var = 'admin'
@@ -382,6 +391,7 @@ class CargoSale(Cargo):
 
         self._determine_actual_unit_price()
         self._determine_commission()
+        self.set_units()
 
     def find_cargo(self, cargo):
         '''Find cargo (may be name or id), set ID and name'''
@@ -460,6 +470,7 @@ class CargoSale(Cargo):
             'actual_gross_lot_price': self.actual_gross_lot_price,
             'actual_net_unit_price': self.actual_net_unit_price,
             'actual_net_lot_price': self.actual_net_lot_price,
-            'trade_codes': self.trade_codes
+            'trade_codes': self.trade_codes,
+            'units': self.units
         }
         return json.dumps(doc)
