@@ -5,6 +5,7 @@ import re
 import logging
 import configparser
 import falcon
+from traveller_api.util import RequestProcessor
 from prometheus_client import Histogram
 from .trade_cargo import TradeCargo, TradeCargoBroker
 
@@ -30,10 +31,10 @@ def validate_uwps(source_uwp, market_uwp):
     return validity
 
 
-class CargoGen(object):
+class CargoGen(RequestProcessor):
     '''
     Return T5 cargo object
-    GET /t5/cargogen/source/<source_uwp>/market/<dest_uwp>
+    GET <apiserver>/t5/cargogen/source/<source_uwp>/market/<dest_uwp>
 
     Returns
     {
@@ -54,7 +55,7 @@ class CargoGen(object):
         "tech level": <source TL>
     }
 
-    GET /t5/cargogen/source/<source_uwp>
+    GET <apiserver>/t5/cargogen/source/<source_uwp>
 
     returns
     {
@@ -78,41 +79,46 @@ class CargoGen(object):
     - <market TC>, <source TC> are market world and source world
       trade codes
     - <source TL> is the source world's tech level
+
+    If either of <source_uwp> or <market_uwp> are 'doc', return this text
     '''
-    @staticmethod
     @REQUEST_TIME.time()
-    def on_get(req, resp, source_uwp, market_uwp=None):
+    def on_get(self, req, resp, source_uwp, market_uwp=None):
         '''
-        GET /t5/cargogen/source/<source_uwp>/market/<dest_uwp>
-        GET /t5/cargogen/source/<source_uwp>'''
+        GET <apiserver>/t5/cargogen/source/<source_uwp>/market/<dest_uwp>
+        GET <apiserver>/t5/cargogen/source/<source_uwp>'''
 
-        cargo = TradeCargo()
-        try:
-            cargo.generate_cargo(source_uwp, market_uwp)
-        except ValueError as err:
-            raise falcon.HTTPError(
-                title='Invalid UWP',
-                status='400 Invalid universal world profile',
-                description=str(err))
-        doc = {
-            'source': {
-                'uwp': cargo.source_world.uwp(),
-                'trade_codes': cargo.source_world.trade_codes
-            },
-            'cargo': str(cargo),
-            'cost': cargo.cost,
-            'description': cargo.description,
-            'tech level': int(cargo.source_world.tech_level)
+        if source_uwp == 'doc' or market_uwp == 'doc':
+            resp.body = self.get_doc_json(req)
+            resp.status = falcon.HTTP_200
+        else:
+            cargo = TradeCargo()
+            try:
+                cargo.generate_cargo(source_uwp, market_uwp)
+            except ValueError as err:
+                raise falcon.HTTPError(
+                    title='Invalid UWP',
+                    status='400 Invalid universal world profile',
+                    description=str(err))
+            doc = {
+                'source': {
+                    'uwp': cargo.source_world.uwp(),
+                    'trade_codes': cargo.source_world.trade_codes
+                },
+                'cargo': str(cargo),
+                'cost': cargo.cost,
+                'description': cargo.description,
+                'tech level': int(cargo.source_world.tech_level)
 
-        }
-        resp.body = json.dumps(doc)
-        resp.status = falcon.HTTP_200
+            }
+            resp.body = json.dumps(doc)
+            resp.status = falcon.HTTP_200
 
 
-class BrokerGen(object):
+class BrokerGen(RequestProcessor):
     '''
     Return T5 cargo object
-    GET /t5/cargogen/source/<source_uwp>/market/<dest_uwp>/broker/<skill>
+    GET <apiserver>/t5/cargogen/source/<source_uwp>/market/<dest_uwp>/broker/<skill>
 
     Returns
     {
@@ -150,44 +156,54 @@ class BrokerGen(object):
     - <source TL> is the source world's tech level
     - <skill> is the broker's skill
     - <commission> is the broker's commission
+
+    If either of <source_uwp>, <market_uwp> are 'doc', return this text
     '''
 
-    @staticmethod
     @REQUEST_TIME.time()
-    def on_get(req, resp, source_uwp, market_uwp=None, broker_skill=None):
-        '''GET /t5/cargogen/source/<source_uwp>/market/<dest_uwp>/broker/<skill>'''
-        cargo = TradeCargoBroker()
-        try:
-            cargo.generate_cargo(source_uwp, market_uwp, broker_skill)
-        except ValueError as err:
-            raise falcon.HTTPError(
-                title='Invalid UWP',
-                status='400 Invalid universal world profile',
-                description=str(err))
-        doc = {
-            'source': {
-                'uwp': cargo.source_world.uwp(),
-                'trade_codes': cargo.source_world.trade_codes
-            },
-            'cargo': str(cargo),
-            'cost': cargo.cost,
-            'description': cargo.description,
-            'tech level': int(cargo.source_world.tech_level)
+    def on_get(
+            self, req, resp,
+            source_uwp, market_uwp=None, broker_skill=None):
+        '''GET <apiserver>/t5/cargogen/source/<source_uwp>/market/<dest_uwp>/broker/<skill>'''
+        LOGGER.debug(
+            'source_uwp = %s, market_uwp = %s, broker_skill = %s',
+            source_uwp, market_uwp, broker_skill)
+        if source_uwp == 'doc' or market_uwp == 'doc':
+            resp.body = self.get_doc_json(req)
+            resp.status = falcon.HTTP_200
+        else:
+            cargo = TradeCargoBroker()
+            try:
+                cargo.generate_cargo(source_uwp, market_uwp, broker_skill)
+            except ValueError as err:
+                raise falcon.HTTPError(
+                    title='Invalid UWP',
+                    status='400 Invalid universal world profile',
+                    description=str(err))
+            doc = {
+                'source': {
+                    'uwp': cargo.source_world.uwp(),
+                    'trade_codes': cargo.source_world.trade_codes
+                },
+                'cargo': str(cargo),
+                'cost': cargo.cost,
+                'description': cargo.description,
+                'tech level': int(cargo.source_world.tech_level)
 
-        }
-        if cargo.market_world is not None:
-            doc['market'] = {
-                'uwp': cargo.market_world.uwp(),
-                'trade_codes': cargo.market_world.trade_codes
             }
-            doc['price'] = cargo.price
-            doc['actual value'] = cargo.actual_value
-            doc['actual value rolls'] = cargo.actual_value_rolls
-        if broker_skill is not None:
-            doc['broker'] = {
-                'skill': cargo.broker_skill,
-                'commission': cargo.commission
-            }
-            doc['net actual value'] = cargo.net_actual_value
-        resp.body = json.dumps(doc)
-        resp.status = falcon.HTTP_200
+            if cargo.market_world is not None:
+                doc['market'] = {
+                    'uwp': cargo.market_world.uwp(),
+                    'trade_codes': cargo.market_world.trade_codes
+                }
+                doc['price'] = cargo.price
+                doc['actual value'] = cargo.actual_value
+                doc['actual value rolls'] = cargo.actual_value_rolls
+            if broker_skill is not None:
+                doc['broker'] = {
+                    'skill': cargo.broker_skill,
+                    'commission': cargo.commission
+                }
+                doc['net actual value'] = cargo.net_actual_value
+            resp.body = json.dumps(doc)
+            resp.status = falcon.HTTP_200

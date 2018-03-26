@@ -6,11 +6,11 @@ import logging
 import os
 import re
 import falcon
+from prometheus_client import Histogram
+from traveller_api.util import RequestProcessor
 from .. import Config
 from .. import DB
 from .db import Schemas
-from traveller_api.util import parse_query_string
-from prometheus_client import Histogram
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
@@ -24,11 +24,11 @@ REQUEST_TIME = Histogram(
     'misc latency')
 
 
-class AngDia(object):
+class AngDia(RequestProcessor):
     '''
     Return angular diameter of object diameter <diameter>
     at range <distance>
-    GET /misc/angdia?distance=<distance>&diameter=<diameter>
+    GET <apiserver>/misc/angdia?distance=<distance>&diameter=<diameter>
 
     Returns
     {
@@ -37,6 +37,7 @@ class AngDia(object):
         "diameter": <diameter>,
         "distance": <distance>
     }
+    GET <apiserver>/misc/angdia?doc=true returns this text
     '''
 
     @REQUEST_TIME.time()
@@ -44,47 +45,62 @@ class AngDia(object):
         '''GET /misc/angdia?distance=<distance>&diameter=<diameter>'''
         self.query_parameters = {
             'distance': None,
-            'diameter': None
+            'diameter': None,
+            'doc': False
         }
         LOGGER.debug('query_string = %s', req.query_string)
-        self.query_parameters = parse_query_string(
-            req.query_string, self.query_parameters)
-        try:
-            distance = float(self.query_parameters['distance'])
-            diameter = float(self.query_parameters['diameter'])
-        except ValueError as err:
-            raise falcon.HTTPError(
-                title='Invalid parameter',
-                status='400 Invalid parameter',
-                description=str(err))
+        LOGGER.debug('scheme = %s host = %s', req.scheme, req.host)
+        LOGGER.debug('prefix = %s', req.prefix)
+        self.parse_query_string(req.query_string)
+        if self.query_parameters['doc'] is True:
+            doc = self.get_doc(req)
+        else:
+            if self.query_parameters['distance'] is None \
+                    or self.query_parameters['diameter'] is None:
+                raise falcon.HTTPError(
+                    title='Missing parameter',
+                    status='400 Missing parameter',
+                    description='Missing parameter(s) - ' +
+                    'specify distance and diameter')
+            try:
+                distance = float(self.query_parameters['distance'])
+                diameter = float(self.query_parameters['diameter'])
+            except ValueError as err:
+                raise falcon.HTTPError(
+                    title='Invalid parameter',
+                    status='400 Invalid parameter',
+                    description=str(err))
 
-        angdia_deg = round(
-            atan2(diameter, distance) * 180 / pi, 3)
-        angdia_rad = round(
-            atan2(diameter, distance), 3)
-        doc = {
-            'ang_dia_deg': angdia_deg,
-            'ang_dia_rad': angdia_rad,
-            'diameter': diameter,
-            'distance': distance
-        }
+            angdia_deg = round(
+                atan2(diameter, distance) * 180 / pi, 3)
+            angdia_rad = round(
+                atan2(diameter, distance), 3)
+            doc = {
+                'ang_dia_deg': angdia_deg,
+                'ang_dia_rad': angdia_rad,
+                'diameter': diameter,
+                'distance': distance
+            }
         resp.body = json.dumps(doc)
         resp.status = falcon.HTTP_200
 
 
-class StarColor(object):
+class StarColor(RequestProcessor):
     '''Return (R, G, B) colour for star of type <type><decimal><size
-        GET /misc/starcolor?code=<code>
+        GET <apiserver>/misc/starcolor?code=<code>
 
         Returns
         {
             "code": <code>,
             "RGB": {"red": <red>, "blue": <blue>, "green": <green>}
         }
+
+        GET <apiserver>/misc/starcolordoc=true returns this text
         '''
     # See star_color.sqlite for RGB
 
     def __init__(self):
+        super(StarColor, self).__init__()
         self.code = None
         self.rgb = {
             'red': None,
@@ -102,27 +118,30 @@ class StarColor(object):
     def on_get(self, req, resp):
         ''' GET /misc/starcolor?code=<code>'''
         self.query_parameters = {
-            'code': None
+            'code': None,
+            'doc': False
         }
         LOGGER.debug('query_string = %s', req.query_string)
-        self.query_parameters = parse_query_string(
-            req.query_string, self.query_parameters)
-        self.clear_data()
-        code = self.query_parameters['code']
-        self._validate_code(code)
-        try:
-            assert self.code is not None
-            assert self.code != ''
-        except AssertionError:
-            raise falcon.HTTPError(
-                title='Bad paramter value {}'.format(code),
-                description='Invalid code {}'.format(code),
-                status='400 Invalid code')
-        self.get_details()
-        doc = {
-            'code': self.code,
-            'rgb': self.rgb
-        }
+        self.parse_query_string(req.query_string)
+        if self.query_parameters['doc'] is True:
+            doc = self.get_doc(req)
+        else:
+            self.clear_data()
+            code = self.query_parameters['code']
+            self._validate_code(code)
+            try:
+                assert self.code is not None
+                assert self.code != ''
+            except AssertionError:
+                raise falcon.HTTPError(
+                    title='Bad paramter value {}'.format(code),
+                    description='Invalid code {}'.format(code),
+                    status='400 Invalid code')
+            self.get_details()
+            doc = {
+                'code': self.code,
+                'rgb': self.rgb
+            }
         resp.body = json.dumps(doc)
         resp.status = falcon.HTTP_200
 

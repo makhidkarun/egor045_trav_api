@@ -19,12 +19,16 @@ class Orbit(object):
         except TypeError:
             raise TypeError(
                 'Invalid type for orbit_number {}'.format(str(orbit_number)))
+        except ValueError:
+            raise ValueError(
+                'Invalid value for orbit_number {}'.format(str(orbit_number)))
         try:
             assert self.orbit_number >= 0
             assert self.orbit_number <= 19.0
         except AssertionError:
             raise ValueError(
-                'Orbit number {} out of range'.format(self.orbit_number))
+                'Orbit number {} out of range'.format(
+                    self.orbit_number))
         self.orbit_radius_mkm = None
         self.orbit_radius_au = None
         self.determine_orbit_radius()

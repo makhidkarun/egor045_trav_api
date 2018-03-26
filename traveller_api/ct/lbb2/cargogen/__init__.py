@@ -3,6 +3,7 @@
 import logging
 import falcon
 from prometheus_client import Histogram
+from traveller_api.util import RequestProcessor
 from ...lbb3.worldgen.planet import System  # noqa
 from .cargo import Cargo, CargoSale
 from .... import Config
@@ -19,10 +20,10 @@ REQUEST_TIME = Histogram(
     'ct_lbb2_cargogen latency')
 
 
-class Purchase(object):
+class Purchase(RequestProcessor):
     '''
     Return CT LBB2 cargo object
-    GET /ct/lbb2/cargogen/purchase?<options>
+    GET <apiserver>/ct/lbb2/cargogen/purchase?<options>
 
     Options:
     - source_uwp: UWP of source world
@@ -33,8 +34,8 @@ class Purchase(object):
     precedence over any source_tc or population specified as options.source_uwp
 
     Examples:
-    - GET /ct/lbb2/cargogen/purchase?source_uwp=C776989-A
-    - GET /ct/lbb2/cargogen/purchase?source_tc=In&source_tc=Ri&population=9
+    - GET <apiserver>/ct/lbb2/cargogen/purchase?source_uwp=C776989-A
+    - GET <apiserver>/ct/lbb2/cargogen/purchase?source_tc=In&source_tc=Ri&population=9
 
     Returns
     {
@@ -69,40 +70,48 @@ class Purchase(object):
 
     @REQUEST_TIME.time()
     def on_get(self, req, resp):
-        '''GET /ct/lbb2/cargogen/purchase?<options>'''
+        '''GET <apiserver>/ct/lbb2/cargogen/purchase?<options>'''
         self.query_parameters = {
             'source_uwp': None,
             'source_tc': [],
-            'population': None
+            'population': None,
+            'doc': False
         }
         LOGGER.debug('query_string = %s', req.query_string)
-        parse_query_string(req.query_string, self.query_parameters)
-        for param in self.query_parameters:
-            LOGGER.debug(
-                'param %s = %s',
-                param,
-                self.query_parameters[param])
-        if self.query_parameters['source_uwp'] is None:
-            LOGGER.debug('Using TCs from source_tc')
-            trade_codes = self.query_parameters['source_tc']
-        else:
-            LOGGER.debug(
-                'Using souce_uwp %s',
-                self.query_parameters['source_uwp'])
-            try:
-                planet = System(uwp=self.query_parameters['source_uwp'])
-            except TypeError as err:
-                raise falcon.HTTPError(
-                    title='Invalid UWP',
-                    status='400 Invalid UWP',
-                    description=str(err))
-            trade_codes = planet.trade_codes
-            self.query_parameters['population'] = planet.population
-        LOGGER.debug('trade codes = %s', trade_codes)
-        LOGGER.debug('population = %s', self.query_parameters['population'])
-        cargo = Cargo(trade_codes, self.query_parameters['population'])
 
-        resp.body = cargo.json()
+        self.parse_query_string(req.query_string)
+        if self.query_parameters['doc'] is True:
+            resp.body = self.get_doc_json(req)
+            resp.status = falcon.HTTP_200
+        else:
+            for param in self.query_parameters:
+                LOGGER.debug(
+                    'param %s = %s',
+                    param,
+                    self.query_parameters[param])
+            if self.query_parameters['source_uwp'] is None:
+                LOGGER.debug('Using TCs from source_tc')
+                trade_codes = self.query_parameters['source_tc']
+            else:
+                LOGGER.debug(
+                    'Using source_uwp %s',
+                    self.query_parameters['source_uwp'])
+                try:
+                    planet = System(uwp=self.query_parameters['source_uwp'])
+                except TypeError as err:
+                    raise falcon.HTTPError(
+                        title='Invalid UWP',
+                        status='400 Invalid UWP',
+                        description=str(err))
+                trade_codes = planet.trade_codes
+                self.query_parameters['population'] = planet.population
+            LOGGER.debug('trade codes = %s', trade_codes)
+            LOGGER.debug(
+                'population = %s',
+                self.query_parameters['population'])
+            cargo = Cargo(trade_codes, self.query_parameters['population'])
+
+            resp.body = cargo.json()
         resp.status = falcon.HTTP_200
 
     """def parse_query_string(self, query_string):
@@ -123,10 +132,10 @@ class Purchase(object):
                         description='Unknown parameter {}'.format(param))"""
 
 
-class Sale(object):
+class Sale(RequestProcessor):
     '''
     Return CT LBB2 cargo sale object
-    GET /ct/lbb2/cargogen/sale?<options>
+    GET <apiserver>/ct/lbb2/cargogen/sale?<options>
 
     Options:
     - cargo: cargo ID (from table) or description (from table)
@@ -141,8 +150,8 @@ class Sale(object):
     precedence over any market_tc specified as options.
 
     Examples:
-    - GET /ct/lbb2/cargogen/sale?cargp=64&quantity=10
-    - GET /ct/lbb2/cargogen/sale?cargp=64&quantity=10&market_tc=In&market_tc=Ri
+    - GET <apiserver>/ct/lbb2/cargogen/sale?cargp=64&quantity=10
+    - GET <apiserver>/ct/lbb2/cargogen/sale?cargp=64&quantity=10&market_tc=In&market_tc=Ri
 
     Returns
     {
@@ -187,7 +196,7 @@ class Sale(object):
 
     @REQUEST_TIME.time()
     def on_get(self, req, resp):
-        '''GET /ct/lbb2/cargogen/sale?<options>'''
+        '''GET <apiserver>/ct/lbb2/cargogen/sale?<options>'''
         self.query_parameters = {
             'cargo': None,
             'market_uwp': None,
@@ -195,42 +204,33 @@ class Sale(object):
             'admin': 0,
             'bribery': 0,
             'broker': 0,
-            'quantity': 0
+            'quantity': 0,
+            'doc': False
         }
         LOGGER.debug('query_string = %s', req.query_string)
-        parse_query_string(req.query_string, self.query_parameters)
+        self.parse_query_string(req.query_string)
+        for param in self.query_parameters:
+            LOGGER.debug('param %s = %s', param, self.query_parameters[param])
 
-        try:
-            cargo = CargoSale(
-                cargo=self.query_parameters['cargo'],
-                quantity=self.query_parameters['quantity'],
-                admin=self.query_parameters['admin'],
-                bribery=self.query_parameters['bribery'],
-                broker=self.query_parameters['broker'],
-                trade_codes=self.determine_trade_codes())
-        except ValueError as err:
-            raise falcon.HTTPError(
-                title='Invalid parameter',
-                status='400 Bad Request',
-                description=str(err))
-        resp.body = cargo.json()
-        resp.status = falcon.HTTP_200
-
-    """def parse_query_string(self, query_string):
-        '''Parse query string'''
-        if query_string != '':
-            options_list = query_string.split('&')
-            for option in options_list:
-                param, value = option.split('=')
-                if param in self.query_parameters:
-                    if isinstance(self.query_parameters[param], list):
-                        self.query_parameters[param].append(value)
-                    else:
-                        self.query_parameters[param] = value
-                else:
-                    raise falcon.HTTPUnprocessableEntity(
-                        title='Unprocessable request',
-                        description='Unknown parameter {}'.format(param))"""
+        if self.query_parameters['doc'] is True:
+            resp.body = self.get_doc_json(req)
+            resp.status = falcon.HTTP_200
+        else:
+            try:
+                cargo = CargoSale(
+                    cargo=self.query_parameters['cargo'],
+                    quantity=self.query_parameters['quantity'],
+                    admin=self.query_parameters['admin'],
+                    bribery=self.query_parameters['bribery'],
+                    broker=self.query_parameters['broker'],
+                    trade_codes=self.determine_trade_codes())
+            except ValueError as err:
+                raise falcon.HTTPError(
+                    title='Invalid parameter',
+                    status='400 Bad Request',
+                    description=str(err))
+            resp.body = cargo.json()
+            resp.status = falcon.HTTP_200
 
     def determine_trade_codes(self):
         '''Determine trade codes from either market_tc or market_uwp'''
