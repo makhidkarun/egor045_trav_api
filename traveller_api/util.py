@@ -94,3 +94,22 @@ class RequestProcessor(object):
     def get_doc_json(self, req):
         '''Return class doc as JSON'''
         return json.dumps(self.get_doc(req))
+
+
+class Ping(RequestProcessor):
+    '''
+    GET /ping
+
+    Returns
+    {
+        "status": "OK"
+    }
+    '''
+    @staticmethod
+    def on_get(req, resp):
+        '''GET /ping'''
+        doc = {
+            "status": "OK"
+        }
+        resp.body = json.dumps(doc)
+        resp.status = falcon.HTTP_200

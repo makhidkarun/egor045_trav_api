@@ -58,3 +58,6 @@ api.add_route('/metrics', util.Metrics())
 
 # Testing error handler
 api.add_route('/error_handler/{strng}', error_handler.Foo())
+
+# Ping endpoint
+api.add_route('/ping', util.Ping())
