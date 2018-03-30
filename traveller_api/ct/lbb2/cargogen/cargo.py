@@ -8,7 +8,7 @@ from ...util import Die
 
 
 LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(logging.DEBUG)
+LOGGER.setLevel(logging.ERROR)
 
 RE_QUANTITY = re.compile('^([0-9]+)D')
 RE_QUANTITY_X = re.compile('^([0-9]+)Dx([0-9]+)')

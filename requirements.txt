@@ -6,3 +6,4 @@ sqlalchemy
 ehex
 T5_worldgen
 prometheus_client
+json-logging-py

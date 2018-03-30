@@ -13,7 +13,7 @@ from .. import DB
 from .db import Schemas
 
 LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(logging.DEBUG)
+LOGGER.setLevel(logging.ERROR)
 
 KONFIG = Config()
 config = KONFIG.config['traveller_api.misc']

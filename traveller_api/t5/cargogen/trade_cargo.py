@@ -5,7 +5,7 @@ import logging
 from T5_worldgen.planet import Planet
 
 LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(logging.DEBUG)
+LOGGER.setLevel(logging.ERROR)
 
 
 class FluxRoll(object):

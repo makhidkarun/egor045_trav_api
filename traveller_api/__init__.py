@@ -12,7 +12,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(logging.INFO)
+LOGGER.setLevel(logging.ERROR)
 
 BASE = declarative_base()
 

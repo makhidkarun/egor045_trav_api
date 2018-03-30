@@ -6,7 +6,7 @@ from traveller_api.util import RequestProcessor
 from prometheus_client import Histogram
 from .orbit import Orbit as CalcOrbit
 LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(logging.DEBUG)
+LOGGER.setLevel(logging.ERROR)
 
 REQUEST_TIME = Histogram(
     't5_orbit_request_latency_seconds',

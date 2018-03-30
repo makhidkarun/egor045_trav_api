@@ -13,7 +13,7 @@ KONFIG = Config()
 config = KONFIG.config['traveller_api.ct.lbb2']
 
 LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(logging.DEBUG)
+LOGGER.setLevel(logging.ERROR)
 
 REQUEST_TIME = Histogram(
     'ct_lbb2_cargogen_request_latency_seconds',

@@ -13,7 +13,7 @@ config = configparser.ConfigParser()    # noqa
 config.read('t5.ini')
 uwp_validator = re.compile(r'[A-HX][0-9A-Z]{6}\-([0-9A-Z])')    # noqa
 LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(logging.DEBUG)
+LOGGER.setLevel(logging.ERROR)
 
 REQUEST_TIME = Histogram(
     't5_cargogen_request_latency_seconds',
