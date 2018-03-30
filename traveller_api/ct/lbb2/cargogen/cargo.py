@@ -281,7 +281,7 @@ class Cargo(object):
         self.resale_dms = self._trade_goods[cargo_id]['resale_dms']
         self.quantity = self.determine_quantity(
             self._trade_goods[cargo_id]['quantity'])
-    
+
     def set_units(self):
         '''Set units - cargo ID in range 51-56 => individual, tons otherwise'''
         if self.id[0] in '12346':
@@ -372,7 +372,7 @@ class CargoSale(Cargo):
             self.admin = int(admin)
             assert self.admin >= 0
             var = 'bribery'
-            self.bribery = bribery
+            self.bribery = int(bribery)
             assert self.bribery >= 0
             var = 'broker'
             self.broker = int(broker)
