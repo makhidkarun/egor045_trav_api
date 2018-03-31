@@ -1,11 +1,12 @@
 '''cargogen.py'''
 
 from random import seed, randint
+import json
 import logging
 from T5_worldgen.planet import Planet
 
 LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(logging.ERROR)
+LOGGER.setLevel(logging.DEBUG)
 
 
 class FluxRoll(object):
@@ -191,16 +192,23 @@ class TradeCargo(object):
         self.source_world = Planet()
         self.market_world = None
         self.actual_value_rolls = (None, None)
+        self.broker_skill = None
+        self.broker_dm = None
+        self.commission = 0
+        self.net_actual_value = 0
         seed()
 
-    def generate_cargo(self, source_uwp, market_uwp=None):
+    def generate_cargo(self, source_uwp, market_uwp=None, broker_skill=0):
         '''Generate cargo'''
         try:
             self.source_world._load_uwp(source_uwp)     # noqa
         except ValueError:
             raise ValueError('Invalid source UWP {}'.format(source_uwp))
+        self.broker_skill = broker_skill
         self.source_world.mainworld_type = None
         self.source_world.determine_trade_codes()
+        self.source_world.trade_codes = self.purge_ce_trade_codes(
+            self.source_world.trade_codes)
         self.description = self.select_cargo_name()
         self.determine_cost(self.source_world.trade_codes)
         self.add_detail(self.source_world.trade_codes)
@@ -213,6 +221,9 @@ class TradeCargo(object):
                 raise ValueError('Invalid market UWP {}'.format(market_uwp))
             self.market_world.mainworld_type = None
             self.market_world.determine_trade_codes()
+            self.market_world.trade_codes = self.purge_ce_trade_codes(
+                self.market_world.trade_codes
+            )
             self.determine_price()
 
     def select_cargo_name(self, add_detail_flag=True):
@@ -367,11 +378,19 @@ class TradeCargo(object):
             self.price = 0
         LOGGER.debug('Price = %s', self.price)
         self.actual_value = int(self.price * self.determine_actual_value())
+        LOGGER.debug('actua value = %s', self.actual_value)
+        self.commission = int(0.05 * self.broker_dm * self.price)
+        LOGGER.debug('commission = %s', self.commission)
+        self.net_actual_value = self.actual_value - self.commission
 
     def determine_actual_value(self, modifier=0):
         '''Determine actual value using flux roll'''
-        flux = FLUX.roll() + modifier
+        broker_dm = int((self.broker_skill + 0.5) / 2)
+        broker_dm = min(4, broker_dm)
+        self.broker_dm = broker_dm
+        flux = FLUX.roll() + modifier + self.broker_dm
         self.actual_value_rolls = (FLUX.die1, FLUX.die2)
+
         flux = max(-5, flux)
         flux = min(8, flux)
 
@@ -391,6 +410,7 @@ class TradeCargo(object):
             'modifier = %s actual_value_multiplier = %s',
             modifier,
             actual_value_multiplier)
+
         return actual_value_multiplier
 
     def __str__(self):
@@ -401,33 +421,47 @@ class TradeCargo(object):
             self.description)
         return source
 
+    def json(self):
+        '''JSON representation'''
+        if self.market_world is not None:
+            market_world_trade_codes = self.market_world.trade_codes
+            market_world_uwp = self.market_world.uwp()
+        else:
+            market_world_trade_codes = []
+            market_world_uwp = None
 
-class TradeCargoBroker(TradeCargo):
-    '''Spec cargo + broker object'''
+        doc = {
+            "cargo": str(self),
+            "cost": self.cost,
+            "description": self.description,
+            "market": {
+                "trade_codes": market_world_trade_codes,
+                "uwp": market_world_uwp,
+                "net_actual_value": self.net_actual_value,
+                "gross_actual_value": self.actual_value,
+                "broker_commission": self.commission
+            },
+            "price": self.price,
+            "source": {
+                "trade_codes": self.source_world.trade_codes,
+                "uwp": self.source_world.uwp()
+            },
+            "tech_level": int(self.source_world.tech_level),
+            "notes": {
+                "actual_value_rolls": self.actual_value_rolls,
+                "broker_skill": self.broker_skill
+            }
+        }
+        return json.dumps(doc)
 
-    def __init__(self):
-        super(TradeCargoBroker, self).__init__()
-        self.broker_skill = None
-        self.commission = None
-        self.net_actual_value = None
-
-    def generate_cargo(self, source_uwp, market_uwp=None, broker_skill=None):
-        '''Overload generate_cargo() to include broker_skill'''
-        if broker_skill is not None:
-            self.broker_skill = int(broker_skill)
-        LOGGER.debug('self.broker_skill = %s', self.broker_skill)
-        super(TradeCargoBroker, self).generate_cargo(source_uwp, market_uwp)
-
-    def determine_actual_value(self, modifier=0):
-        '''Overload determine_actual_value to include DM'''
-        broker_dm = int((self.broker_skill + 0.5) / 2)
-        broker_dm = min(4, broker_dm)
-        actual_value_multiplier = super(TradeCargoBroker, self)\
-            .determine_actual_value(broker_dm + modifier)
-        self.commission = int(0.05 * actual_value_multiplier * self.price)
-        return actual_value_multiplier
-
-    def determine_price(self):
-        '''Overload determine_price to include commission'''
-        super(TradeCargoBroker, self).determine_price()
-        self.net_actual_value = self.actual_value - self.commission
+    @staticmethod
+    def purge_ce_trade_codes(trade_codes):
+        '''Purge CE trade codes'''
+        try:
+            assert isinstance(trade_codes, list)
+        except AssertionError:
+            raise ValueError('trade_codes must be type list')
+        for indx, code in enumerate(trade_codes):
+            if code in ['Ht', 'Lt']:
+                del trade_codes[indx]
+        return trade_codes
