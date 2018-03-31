@@ -46,4 +46,5 @@ def test_source_invalid(client):
     '''Test /t5/cargogen/source/<bogus_uwp>'''
     source_uwp = 'Foo'
     resp = client.simulate_get('/t5/cargogen/source/{}'.format(source_uwp))
-    assert resp.status == falcon.HTTP_400
+    print('* {}'.format(resp.status))
+    assert resp.status == '400 Invalid universal world profile'

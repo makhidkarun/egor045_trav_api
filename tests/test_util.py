@@ -47,7 +47,7 @@ def test_parse_query_string_bogus(client):
         'bar': ''
     }
 
-    with pytest.raises(falcon.HTTPInvalidParam):
+    with pytest.raises(falcon.HTTPError):
         actual_query_parameters = parse_query_string(
             query_string=query_string,
             valid_query_parameters=valid_params)
