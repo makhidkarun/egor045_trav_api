@@ -11,7 +11,7 @@ import traveller_api.error_handler as error_handler
 import traveller_api.middleware as middleware
 
 api = application = falcon.API(
-    middleware=middleware.PrometheusMetrics
+    middleware=middleware.PrometheusMetrics()
 )
 
 # Misc APIs
