@@ -3,8 +3,7 @@
 import json
 import requests
 import falcon
-from prometheus_client import multiprocess, CollectorRegistry
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+
 
 
 class RestQuery(object):
@@ -38,20 +37,6 @@ def parse_query_string(query_string='', valid_query_parameters={}):
                     status='400 Invalid parameter',
                     description='Invalid parameter "{}"'.format(param))
     return query_parameters
-
-
-class Metrics(object):
-    '''Report Prometheus metrics'''
-
-    def on_get(self, req, resp):
-        '''GET /metrics/'''
-        registry = CollectorRegistry()
-        multiprocess.MultiProcessCollector(registry)
-        data = generate_latest(registry)
-
-        resp.body = data
-        resp.content_type = CONTENT_TYPE_LATEST
-        resp.status = falcon.HTTP_200
 
 
 class RequestProcessor(object):

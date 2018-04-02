@@ -8,8 +8,11 @@ import traveller_api.t5.cargogen as t5_cargogen
 import traveller_api.t5.orbit as t5_orbit
 import traveller_api.util as util
 import traveller_api.error_handler as error_handler
+import traveller_api.middleware as middleware
 
-api = application = falcon.API()
+api = application = falcon.API(
+    middleware=middleware.PrometheusMetrics
+)
 
 # Misc APIs
 # api.add_route('/misc/angdia/{distance}/{diameter}', misc.AngDia())
@@ -54,7 +57,7 @@ api.add_route('/misc/starcolor', misc.StarColor())
 api.add_route('/misc/starcolour', misc.StarColor())
 
 # Metrics
-api.add_route('/metrics', util.Metrics())
+api.add_route('/metrics', middleware.Metrics())
 
 # Testing error handler
 api.add_route('/error_handler/{strng}', error_handler.Foo())
