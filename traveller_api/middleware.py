@@ -16,7 +16,18 @@ REQUEST_LATENCY = Histogram(
     'Request latency',
     ['app_name', 'endpoint']
 )
-
+API_PATHS = [
+    '/misc/angdia',
+    '/ct/lbb6/star',
+    '/mt/wbh/star',
+    '/t5/cargogen',
+    '/ct/lbb2/cargogen/purchase',
+    '/ct/lbb2/cargogen/sale',
+    '/t5/orbit',
+    '/misc/starcolor',
+    '/metrics',
+    '/ping'
+]
 
 class PrometheusMetrics(object):
     '''Prometheus metrics middleware'''
@@ -26,22 +37,26 @@ class PrometheusMetrics(object):
         '''Start request timer'''
         request.start_time = time.time()
 
-    @staticmethod
-    def stop_timer(request, response):
+    def stop_timer(self, request, response):
         '''Stop request timer'''
+        metric_path = self.trim_path(request.path)
         resp_time = time.time() - request.start_time
-        REQUEST_LATENCY.labels(
-            'egor045_trav_api', request.path).observe(resp_time)
+        if metric_path:
+            REQUEST_LATENCY.labels(
+                'egor045_trav_api', metric_path).observe(resp_time)
         return response
 
-    @staticmethod
-    def record_request_data(request, response):
+    def record_request_data(self, request, response):
         '''Record request/response data'''
-        REQUEST_COUNT.labels(
-            'egor045_trav_api',
-            request.method,
-            request.path,
-            response.status_code).inc()
+        metric_path = self.trim_path(request.path)
+        resp_time = time.time() - request.start_time
+        status = response.status.split(' ')[0]
+        if metric_path:
+            REQUEST_COUNT.labels(
+                'egor045_trav_api',
+                request.method,
+                metric_path,
+                status).inc()
         return response
 
     def process_request(self, req, resp):
@@ -57,6 +72,12 @@ class PrometheusMetrics(object):
         self.record_request_data(req, resp)
         self.stop_timer(req, resp)
 
+    @staticmethod
+    def trim_path(path):
+        '''Trim request path to remove variable elements'''
+        for api_path in API_PATHS:
+            if path.startswith(api_path):
+                return api_path
 
 class Metrics(object):
     '''Report Prometheus metrics'''
