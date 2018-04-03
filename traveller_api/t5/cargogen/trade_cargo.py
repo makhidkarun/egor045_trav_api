@@ -202,9 +202,13 @@ class TradeCargo(object):
         '''Generate cargo'''
         try:
             self.source_world._load_uwp(source_uwp)     # noqa
-        except ValueError:
+        except (ValueError, TypeError):
             raise ValueError('Invalid source UWP {}'.format(source_uwp))
-        self.broker_skill = broker_skill
+        try:
+            assert int(broker_skill) >= 0
+            self.broker_skill = int(broker_skill)
+        except TypeError:
+            raise ValueError('Invalid broker_skill {}'.format(broker_skill))
         self.source_world.mainworld_type = None
         self.source_world.determine_trade_codes()
         self.source_world.trade_codes = self.purge_ce_trade_codes(
@@ -235,6 +239,9 @@ class TradeCargo(object):
             LOGGER.debug('No trade codes supplied, using Na')
             trade_code = 'Na'
         else:
+            LOGGER.debug(
+                'randint = %s',
+                randint(0, len(self.source_world.trade_codes) - 1))
             trade_code = self.source_world.trade_codes[randint(
                 0, len(self.source_world.trade_codes) - 1)]
         LOGGER.debug('Selected trade code %s', trade_code)
@@ -372,13 +379,14 @@ class TradeCargo(object):
             int(self.source_world.tech_level) -
             int(self.market_world.tech_level))
         LOGGER.debug('Price TL modifier = %s%%', int(100 * tl_mod))
+        LOGGER.debug('Price TL change = %s', int(-self.price * tl_mod))
         self.price = int(self.price * (1 + tl_mod))
         if self.price < 0:
             LOGGER.debug('Price (Cr%s) < Cr0, resetting to Cr0', self.price)
             self.price = 0
         LOGGER.debug('Price = %s', self.price)
         self.actual_value = int(self.price * self.determine_actual_value())
-        LOGGER.debug('actua value = %s', self.actual_value)
+        LOGGER.debug('actual value = %s', self.actual_value)
         self.commission = int(0.05 * self.broker_dm * self.price)
         LOGGER.debug('commission = %s', self.commission)
         self.net_actual_value = self.actual_value - self.commission

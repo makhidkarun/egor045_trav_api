@@ -5,7 +5,6 @@ import re
 import logging
 import configparser
 import falcon
-from prometheus_client import Histogram
 from traveller_api.util import RequestProcessor
 from .trade_cargo import TradeCargo
 
@@ -13,11 +12,7 @@ config = configparser.ConfigParser()    # noqa
 config.read('t5.ini')
 uwp_validator = re.compile(r'[A-HX][0-9A-Z]{6}\-([0-9A-Z])')    # noqa
 LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(logging.ERROR)
-
-REQUEST_TIME = Histogram(
-    't5_cargogen_request_latency_seconds',
-    't5_cargogen latency')
+LOGGER.setLevel(logging.DEBUG)
 
 
 def validate_uwps(source_uwp, market_uwp):
@@ -87,23 +82,36 @@ class CargoGen(RequestProcessor):
 
     If either of <source_uwp> or <market_uwp> are 'doc', return this text
     '''
-    @REQUEST_TIME.time()
-    def on_get(self, req, resp, source_uwp, market_uwp=None, broker_skill=0):
-        '''
-        GET <apiserver>/t5/cargogen/source/<source_uwp>/market/<dest_uwp>
-        GET <apiserver>/t5/cargogen/source/<source_uwp>'''
 
-        if source_uwp == 'doc' or market_uwp == 'doc':
+    def on_get(self, req, resp):
+        '''
+        GET <apiserver>/t5/cargogen?source_uwp=<source_uwp>&market_uwp=<dest_uwp>
+        GET <apiserver>/t5/cargogen?source_uwp=<source_uwp>'''
+
+        self.query_parameters = {
+            'doc': False,
+            'source_uwp': None,
+            'market_uwp': None,
+            'broker': 0
+        }
+        self.parse_query_string(req.query_string)
+
+        if self.query_parameters['doc'] is True:
             resp.body = self.get_doc_json(req)
             resp.status = falcon.HTTP_200
         else:
             cargo = TradeCargo()
+            LOGGER.debug('broker = %s', self.query_parameters['broker'])
             try:
-                cargo.generate_cargo(source_uwp, market_uwp, broker_skill)
+                cargo.generate_cargo(
+                    self.query_parameters['source_uwp'],
+                    self.query_parameters['market_uwp'],
+                    self.query_parameters['broker']
+                )
             except ValueError as err:
                 raise falcon.HTTPError(
                     title='Invalid UWP',
-                    status='400 Invalid universal world profile',
+                    status='400 Invalid parameter',
                     description=str(err))
 
             resp.body = cargo.json()

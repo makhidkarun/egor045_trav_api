@@ -59,7 +59,7 @@ def test_api_doc(client):
     resp = client.simulate_get(
         '/t5/orbit',
         query_string='doc=true')
-    
+
     assert resp.status == falcon.HTTP_200
     assert resp.json['doc'] == Orbit.__doc__.replace(
         '<apiserver>', 'http://falconframework.org')

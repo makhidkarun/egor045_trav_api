@@ -34,14 +34,7 @@ api.add_route(
     mt.wbh.orbit.Orbit())
 
 # T5 Cargogen API
-api.add_route('/t5/cargogen/source/{source_uwp}', t5_cargogen.CargoGen())
-api.add_route(
-    '/t5/cargogen/source/{source_uwp}/market/{market_uwp}',
-    t5_cargogen.CargoGen())
-api.add_route(
-    '/t5/cargogen/source/{source_uwp}/market/{market_uwp}/' +
-    'broker/{broker_skill:int}',
-    t5_cargogen.CargoGen())
+api.add_route('/t5/cargogen', t5_cargogen.CargoGen())
 
 # CT Cargogen API
 api.add_route('/ct/lbb2/cargogen/purchase', ct.lbb2.cargogen.Purchase())
