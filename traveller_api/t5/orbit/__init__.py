@@ -3,20 +3,15 @@
 import logging
 import falcon
 from traveller_api.util import RequestProcessor
-from prometheus_client import Histogram
 from .orbit import Orbit as CalcOrbit
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.ERROR)
-
-REQUEST_TIME = Histogram(
-    't5_orbit_request_latency_seconds',
-    't5_orbit latency')
 
 
 class Orbit(RequestProcessor):
     '''
     Return orbit details
-    GET <apiserver>/t5/orbit/<orbit_number>
+    GET <apiserver>/t5/orbit?orbit_number=<orbit_number>
 
     Returns
     {
@@ -29,15 +24,20 @@ class Orbit(RequestProcessor):
     GET <apiserver>/t5/orbit/doc returns this text
     '''
 
-    @REQUEST_TIME.time()
-    def on_get(self, req, resp, orbit_number):
-        '''GET /t5/orbit/<orbit_number>'''
-        if orbit_number == 'doc':
+    def on_get(self, req, resp):
+        '''GET /t5/orbit?orbit_number=<orbit_number>'''
+
+        self.query_parameters = {
+            'doc': False,
+            'orbit_number': None
+        }
+        self.parse_query_string(req.query_string)
+        if self.query_parameters['doc'] is True:
             resp.body = self.get_doc_json(req)
             resp.status = falcon.HTTP_200
         else:
             try:
-                orbit = CalcOrbit(orbit_number)
+                orbit = CalcOrbit(self.query_parameters['orbit_number'])
             except TypeError as err:
                 raise falcon.HTTPError(
                     title='Invalid type',

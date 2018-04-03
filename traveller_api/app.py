@@ -48,7 +48,7 @@ api.add_route('/ct/lbb2/cargogen/purchase', ct.lbb2.cargogen.Purchase())
 api.add_route('/ct/lbb2/cargogen/sale', ct.lbb2.cargogen.Sale())
 
 # T5 orbit API
-api.add_route('/t5/orbit/{orbit_number}', t5_orbit.Orbit())
+api.add_route('/t5/orbit', t5_orbit.Orbit())
 
 # Misc starcolor API
 # api.add_route('/misc/starcolor/{code}', misc.StarColor())

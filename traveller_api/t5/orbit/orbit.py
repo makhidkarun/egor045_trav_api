@@ -16,12 +16,9 @@ class Orbit(object):
         ]
         try:
             self.orbit_number = float(orbit_number)
-        except TypeError:
+        except (TypeError, ValueError):
             raise TypeError(
                 'Invalid type for orbit_number {}'.format(str(orbit_number)))
-        except ValueError:
-            raise ValueError(
-                'Invalid value for orbit_number {}'.format(str(orbit_number)))
         try:
             assert self.orbit_number >= 0
             assert self.orbit_number <= 19.0
@@ -51,4 +48,4 @@ class Orbit(object):
             'au': self.orbit_radius_au,
             'mkm': self.orbit_radius_mkm
         }
-        return json.dumps(doc)
+        return json.dumps(doc, sort_keys=True)
