@@ -12,6 +12,7 @@ sys.path.insert(
     0,
     os.path.dirname(os.path.abspath(__file__)) + '/../')
 from traveller_api.app import api
+from traveller_api.t5.orbit import Orbit
 
 @pytest.fixture
 def client():
@@ -51,3 +52,14 @@ def test_api_invalid_orbit_number(client):
             '/t5/orbit',
             query_string='orbit_number={}'.format(orbit_number))
         assert resp.status == '400 Invalid parameter'
+
+
+def test_api_doc(client):
+    '''Test API doc'''
+    resp = client.simulate_get(
+        '/t5/orbit',
+        query_string='doc=true')
+    
+    assert resp.status == falcon.HTTP_200
+    assert resp.json['doc'] == Orbit.__doc__.replace(
+        '<apiserver>', 'http://falconframework.org')
