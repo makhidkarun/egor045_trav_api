@@ -1,26 +1,17 @@
-FROM alpine:3.5
+FROM alpine:3.7
 
 # Base install
 RUN apk update && apk add --no-cache \
 #    bash \
-    python \
-    py-pip
+    python3
 
 # Setup falcon application
-# RUN mkdir -p /deploy/
 COPY traveller_api /traveller_api
 COPY requirements.txt star.sqlite traveller_rest_api.ini docker/gunicorn.conf docker/logging.conf /
-RUN pip install -r /requirements.txt
+RUN pip3 install -r /requirements.txt
 
 # Set up Prometheus multiprocess registry
 RUN mkdir -p /metrics
-
-# Setup supervisord
-# RUN mkdir -p /var/log/supervisor
-# COPY docker/supervisord.conf /etc/supervisord.conf
-
-# Start processes
-# CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
 
 WORKDIR /
 EXPOSE 8000
