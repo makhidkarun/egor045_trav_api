@@ -35,4 +35,4 @@ fi
 set -- "${POSITIONAL[@]}"
 echo Running docker image $IMAGE with env=$ENV, port=$PORTS
 
-echo /usr/bin/docker run --rm -p $PORTS -e $ENV $IMAGE
+/usr/bin/docker run --rm -p $PORTS -e $ENV $IMAGE
