@@ -17,4 +17,4 @@ venv*
 *.sqlite
 .pytest_cache/
 *.sublime-*
-*code-workspace
+*.code-workspace
