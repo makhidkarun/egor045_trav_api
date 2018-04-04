@@ -29,37 +29,36 @@ def validate_uwps(source_uwp, market_uwp):
 class CargoGen(RequestProcessor):
     '''
     Return T5 cargo object
-    GET <apiserver>/t5/cargogen/source/<source_uwp>/market/<dest_uwp>/broker/<broker_skill>
-    GET <apiserver>/t5/cargogen/source/<source_uwp>/market/<dest_uwp>
-    GET <apiserver>/t5/cargogen/source/<source_uwp>
+    GET <apiserver>/t5/cargogen?source_uwp=<source_uwp>&market_uwp=<dest_uwp>&broker=<broker_skill>
 
-    Return
-{
-    "cargo": "<source TL>-<source TCs> Cr<cost> <description>",
-    "cost": <cost>,
-    "description": <description>,
-    "market": {
-        "broker_commission": <broker commission>,
-        "gross_actual_value": <actual value>,
-        "net_actual_value": <net actual value>,
-        "trade_codes": [ <market TC>, <market TC>, ...],
-        "uwp": <market UWP>
-    },
-    "notes": {
-        "actual_value_rolls": [
-            <av roll1>, <av roll2>],
-        "broker_skill": <broker_skill>
-    },
-    "price": <price>,
-    "source": {
-        "trade_codes": [ <source TC>, <source TC>, ... ],
-        "uwp": <cource UWP>
-    },
-    "tech_level": <source TL>
-}
+    Returns
+    {
+        "cargo": "<source TL>-<source TCs> Cr<cost> <description>",
+        "cost": <cost>,
+        "description": <description>,
+        "market": {
+            "broker_commission": <broker commission>,
+            "gross_actual_value": <actual value>,
+            "net_actual_value": <net actual value>,
+            "trade_codes": [ <market TC>, <market TC>, ...],
+            "uwp": <market UWP>
+        },
+        "notes": {
+            "actual_value_rolls": [
+                <av roll1>, <av roll2>],
+            "broker_skill": <broker_skill>
+        },
+        "price": <price>,
+        "source": {
+            "trade_codes": [ <source TC>, <source TC>, ... ],
+            "uwp": <cource UWP>
+        },
+        "tech_level": <source TL>
+    }
 
     where
-    - <source UWP>, <market UWP> are source world and market world UWPs
+    - <source UWP>, <dest UWP> are source world and market world UWPs
+      - source_uwp is required
     - <actual value> is the end price
     - <av_roll1>, <av_roll2> are the Flux rolls used to
       determine actual value
@@ -80,7 +79,10 @@ class CargoGen(RequestProcessor):
     - <price>, <actual value> and <net actual value> will be 0
     - <market UWP>, <av roll1>, <av roll2> will be null
 
-    If either of <source_uwp> or <market_uwp> are 'doc', return this text
+
+    GET <apiserver>/t5/cargogen?doc=true
+
+    Returns this text
     '''
 
     def on_get(self, req, resp):
