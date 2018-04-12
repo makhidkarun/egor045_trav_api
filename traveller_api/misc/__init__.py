@@ -165,7 +165,7 @@ class StarColor(RequestProcessor):
         '''Validate code -> type, decimal, size'''
         LOGGER.debug('code = %s', code)
         if code:
-            if code.endswith('D'):
+            if code.endswith('D') or code.startswith('D'):
                 self._validate_code_dwarf(code)
             else:
                 self._validate_code_star(code)
@@ -209,8 +209,15 @@ class StarColor(RequestProcessor):
 
     def _validate_code_dwarf(self, code):
         '''Validate code for dwarf'''
-        mtch = re.match(r'([OBAFGKM])\s*D', code)
-        if mtch:
-            LOGGER.debug('code matches RE')
-            typ = mtch.group(1)
-            self.code = '{}D'.format(typ)
+        if code.startswith('D'):
+            mtch = re.match(r'D\s*([OBAFGKM])', code)
+            if mtch:
+                LOGGER.debug('code matches RE')
+                typ = mtch.group(1)
+                self.code = 'D{}'.format(typ)
+        else:
+            mtch = re.match(r'([OBAFGKM])\s*D', code)
+            if mtch:
+                LOGGER.debug('code matches RE')
+                typ = mtch.group(1)
+                self.code = '{}D'.format(typ)
