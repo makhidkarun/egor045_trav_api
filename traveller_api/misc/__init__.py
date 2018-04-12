@@ -86,17 +86,18 @@ class AngDia(RequestProcessor):
 
 
 class StarColor(RequestProcessor):
-    '''Return (R, G, B) colour for star of type <type><decimal><size
-        GET <apiserver>/misc/starcolor?code=<code>
+    '''
+    Return (R, G, B) colour for star of type <type><decimal><size
+    GET <apiserver>/misc/starcolor?code=<code>
 
-        Returns
-        {
-            "code": <code>,
-            "RGB": {"red": <red>, "blue": <blue>, "green": <green>}
-        }
+    Returns
+    {
+        "code": <code>,
+        "RGB": {"red": <red>, "blue": <blue>, "green": <green>}
+    }
 
-        GET <apiserver>/misc/starcolordoc=true returns this text
-        '''
+    GET <apiserver>/misc/starcolordoc=true returns this text
+    '''
     # See star_color.sqlite for RGB
 
     def __init__(self):
