@@ -8,7 +8,7 @@ import os
 sys.path.insert(
     0,
     os.path.dirname(os.path.abspath(__file__)) + '/../')
-from traveller_api.ct.lbb2.cargogen.cargo import Cargo, CargoSale
+from traveller_api.ct.lbb2.cargogen.cargo import Cargo
 
 
 class TestCargoBasic(unittest.TestCase):
@@ -16,12 +16,13 @@ class TestCargoBasic(unittest.TestCase):
 
     def test_cargo_create(self):
         '''Create cargo tests'''
-        cargo = Cargo([])
+        cargo = Cargo()
+        cargo.purchase([])
         self.assertTrue(cargo.name != '')
         self.assertTrue(cargo.quantity != 0)
         self.assertTrue(
-            cargo.actual_lot_price ==
-            cargo.actual_unit_price * cargo.quantity)
+            cargo.purchase_actual_lot_price ==
+            cargo.purchase_actual_unit_price * cargo.quantity)
 
 
 class TestCargoSaleBasic(unittest.TestCase):
@@ -30,27 +31,34 @@ class TestCargoSaleBasic(unittest.TestCase):
     def test_cargosale_basic(self):
         '''Create CargoSale tests'''
         # Test with valid cargo params
-        cargo = CargoSale('Wood')
+        cargo = Cargo()
+        cargo.sale('Wood')
         del cargo
         with self.assertRaises(TypeError):
-            cargo = CargoSale()
+            cargo = Cargo()
+            cargo.sale()
             del cargo
         with self.assertRaises(ValueError):
-            cargo = CargoSale(None)
+            cargo = Cargo()
+            cargo.sale(None)
             del cargo
-        cargo = CargoSale('22')
+        cargo = Cargo()
+        cargo.sale('22')
         self.assertTrue(cargo.name == 'Copper')
         with self.assertRaises(ValueError):
-            cargo = CargoSale('Foo')
+            cargo = Cargo()
+            cargo.sale('Foo')
             del cargo
         with self.assertRaises(ValueError):
-            cargo = CargoSale(77)
+            cargo = Cargo()
+            cargo.sale(77)
             del cargo
 
     def test_cargosale_calculations(self):
-        cargo = CargoSale('Copper', quantity=10, broker=1)
+        cargo = Cargo()
+        cargo.sale('Copper', quantity=10, broker=1)
         self.assertTrue(
-            cargo.actual_gross_lot_price ==
-            cargo.quantity * cargo.actual_gross_unit_price)
+            cargo.sale_actual_gross_lot_price ==
+            cargo.quantity * cargo.sale_actual_gross_unit_price)
         self.assertTrue(
             cargo.commission == 0.05 * cargo.quantity * cargo.base_price)

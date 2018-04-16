@@ -5,7 +5,7 @@ import falcon
 from prometheus_client import Histogram
 from traveller_api.util import RequestProcessor
 from ...lbb3.worldgen.planet import System  # noqa
-from .cargo import Cargo, CargoSale
+from .cargo import Cargo
 from .... import Config
 from ....util import parse_query_string
 
@@ -22,7 +22,7 @@ REQUEST_TIME = Histogram(
 
 class Purchase(RequestProcessor):
     '''
-    Return CT LBB2 cargo object
+    Return CT LBB2 cargo object, populated with purchase data
     GET <apiserver>/ct/lbb2/cargogen/purchase?<options>
 
     Options:
@@ -39,11 +39,20 @@ class Purchase(RequestProcessor):
 
     Returns
     {
-        "actual_lot_price": <actual lot price>,
-        "actual_unit_price": <actual unit price>,
         "base_price": <base price>,
         "id": <cargo id>,
         "name": <cargo description>,
+        "purchase": {
+            "actual_lot_price": <actual lot price>,
+            "actual_unit_price": <actual unit price>,
+            "notes": {
+                "actual_value_dm": <actual value DM>,
+                "actual_value_roll": <actual value roll>
+            },
+            "trade_codes": [
+                <trade classification>, ...
+            ]
+        },
         "purchase_dms": {
             <trade classificaton>: <purchase DM>, ...
         },
@@ -51,9 +60,19 @@ class Purchase(RequestProcessor):
         "resale_dms": {
             <trade classification>: <resale DM>, ...
         },
-        "trade_codes": [
-            <trade classification>, ....
-        ],
+        "sale": {
+            "actual_gross_lot_price": null,
+            "actual_gross_unit_price": null,
+            "actual_net_lot_price": null,
+            "actual_net_unit_price": null,
+            "actual_value_dm": null,
+            "actual_value_roll": null,
+            "admin": null,
+            "bribery": null,
+            "broker": null,
+            "commission": null,
+            "trade_codes": []
+        },
         "units": <units>
     }
 
@@ -68,6 +87,11 @@ class Purchase(RequestProcessor):
     - <purchase DM> is the cargo's purchase DM for the specified trade code
     - <resale DM> is the cargo's resale DM for the specified trade code
     - <units> is the unit for quantity - either tons or blank
+    - <actual value roll> is the roll on the actual value table
+    - <actual value DM> is the DM applied to the actual value roll
+
+    Note: this JSON representation has the same fields as the cargo sale object 
+    available at <apiserver>/ct/lbb2/cargogen/sale
     '''
 
     @REQUEST_TIME.time()
@@ -111,7 +135,8 @@ class Purchase(RequestProcessor):
             LOGGER.debug(
                 'population = %s',
                 self.query_parameters['population'])
-            cargo = Cargo(trade_codes, self.query_parameters['population'])
+            cargo = Cargo()
+            cargo.purchase(trade_codes, self.query_parameters['population'])
 
             resp.body = cargo.json()
         resp.status = falcon.HTTP_200
@@ -152,26 +177,50 @@ class Sale(RequestProcessor):
     precedence over any market_tc specified as options.
 
     Examples:
-    - GET <apiserver>/ct/lbb2/cargogen/sale?cargp=64&quantity=10
-    - GET <apiserver>/ct/lbb2/cargogen/sale?cargp=64&quantity=10&market_tc=In&market_tc=Ri
+    - GET <apiserver>/ct/lbb2/cargogen/sale?cargo=64&quantity=10
+    - GET <apiserver>/ct/lbb2/cargogen/sale?cargpo64&quantity=10&market_tc=In&market_tc=Ri
 
     Returns
     {
-        "actual_gross_lot_price": <gross lot price>,
-        "actual_gross_unit_price": <gross unit price>,
-        "actual_net_lot_price": <net lot price>,
-        "actual_net_unit_price": <net unit price>,
-        "admin": <admin skill level>,
         "base_price": <base price>,
-        "bribery": <bribery skill level>,
-        "broker": <broker skill level>,
-        "commission": <broker's commission>,
         "id": <cargo id>,
         "name": <cargo description>,
-        "quantity": <lot size>,
-        "trade_codes": [ <trade classification>, ...],
+        "purchase": {
+            "actual_lot_price": null,
+            "actual_unit_price": null,
+            "notes": {
+                "actual_value_dm": null,
+                "actual_value_roll": null
+            },
+            "trade_codes": []
+        },
+        "purchase_dms": {
+            <trade classificaton>: <purchase DM>, ...
+        },
+        "quantity": 10,
+        "resale_dms": {
+            <trade classification>: <resale DM>, ...
+        },
+        "sale": {
+            "actual_gross_lot_price": <gross lot price>,
+            "actual_gross_unit_price": <gross unit price>,
+            "actual_net_lot_price": <net lot price>,
+            "actual_net_unit_price": <net unit price>,
+            "admin": <admin skill level>,
+            "bribery": <bribery skill level>,
+            "broker": <broker skill level>,
+            "commission": <broker's commission>,
+            "notes": {
+                "actual_value_dm": <actual value DM>,
+                "actual_value_roll": <actual value roll>
+            },
+            "trade_codes": [
+                <trade classification>, ...
+            ]
+        },
         "units": <units>
     }
+
 
     where
     - <gross lot price> is <gross unit price> * <lot size>
@@ -221,7 +270,8 @@ class Sale(RequestProcessor):
             resp.status = falcon.HTTP_200
         else:
             try:
-                cargo = CargoSale(
+                cargo = Cargo()
+                cargo.sale(
                     cargo=self.query_parameters['cargo'],
                     quantity=self.query_parameters['quantity'],
                     admin=self.query_parameters['admin'],
