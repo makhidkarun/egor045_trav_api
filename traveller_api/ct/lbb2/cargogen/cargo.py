@@ -6,7 +6,7 @@ import re
 import json
 import logging
 from ehex import ehex
-from ...util import Die
+from traveller_api.ct.util import Die
 
 
 LOGGER = logging.getLogger(__name__)
