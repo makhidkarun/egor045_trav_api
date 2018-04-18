@@ -1,6 +1,6 @@
 '''test_ct_lbb2_cargo.py'''
 
-# pylint: disable=E402
+# pylint: disable=E0402, C0413
 
 import unittest
 import sys
@@ -36,8 +36,10 @@ class TestCargoSaleBasic(unittest.TestCase):
         del cargo
         with self.assertRaises(TypeError):
             cargo = Cargo()
+            # pylint: disable=E1120
             cargo.sale()
             del cargo
+            # pylint: enable=E1120
         with self.assertRaises(ValueError):
             cargo = Cargo()
             cargo.sale(None)
@@ -55,6 +57,7 @@ class TestCargoSaleBasic(unittest.TestCase):
             del cargo
 
     def test_cargosale_calculations(self):
+        '''Test cargo sale calculations'''
         cargo = Cargo()
         cargo.sale('Copper', quantity=10, broker=1)
         self.assertTrue(

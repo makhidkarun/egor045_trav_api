@@ -1,5 +1,8 @@
 '''test_class_t5_cargogen.py'''
 
+# pragma pylint: disable=relative-beyond-top-level
+# pragma pylint: disable=C0413, E0401, W0621, W0613
+
 import json
 import logging
 import os
@@ -32,8 +35,8 @@ class TestFluxRoll(unittest.TestCase):
         side_effect=mock_randint)
     def test_fluxroll(self, mock_randint):
         '''Test FluxRoll'''
-        f = FluxRoll()
-        self.assertTrue(f.roll() == 0)
+        _ = FluxRoll()
+        self.assertTrue(_.roll() == 0)
 
 
 class TestTradeCargo(unittest.TestCase):

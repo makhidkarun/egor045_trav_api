@@ -1,7 +1,7 @@
 '''test_api_t5_orbit.py'''
 
 # pragma pylint: disable=relative-beyond-top-level
-# pragma pylint: disable=C0413, E0401
+# pragma pylint: disable=C0413, E0401, W0621
 
 import logging
 import sys
@@ -79,7 +79,7 @@ def test_valid_broker(client):
     query_string += '&market_uwp=E421315-9'
     query_string += '&broker=2'
     LOGGER.debug('query_string = %s', query_string)
-    
+
     resp = client.simulate_get(
         '/t5/cargogen',
         query_string=query_string)
@@ -92,7 +92,7 @@ def test_invalid_broker(client):
     query_string += '&market_uwp=E421315-9'
     query_string += '&broker=Two'
     LOGGER.debug('query_string = %s', query_string)
-    
+
     resp = client.simulate_get(
         '/t5/cargogen',
         query_string=query_string)
