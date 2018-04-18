@@ -1,5 +1,7 @@
 '''traveller-rest-api utils'''
 
+# pragma pylint: disable=W0102, W0613
+
 import json
 import requests
 import falcon
@@ -65,6 +67,16 @@ class RequestProcessor(object):
                         title='Invalid parameter',
                         status='400 Invalid parameter',
                         description='Invalid parameter "{}"'.format(param))
+            self._dedupe_list()
+
+
+    def _dedupe_list(self):
+        '''Dedupe list parameter'''
+        for param in self.query_parameters:
+            if isinstance(self.query_parameters[param], list):
+                t_set = set(self.query_parameters[param])
+                self.query_parameters[param] = list(t_set)
+
 
     def get_doc(self, req):
         '''Return class doc, replace <apiserver> with server prefix'''

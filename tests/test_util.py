@@ -1,18 +1,23 @@
 '''test_util.py'''
 
-# pylint: disable=E0402
+# pragma pylint: disable=E0402, W0621, C0413, W0613, C0103
 
+import logging
+import sys
+import os
+import unittest
 import falcon
 from falcon import testing
 import pytest
-import sys
-import os
 sys.path.insert(
     0,
     os.path.dirname(os.path.abspath(__file__)) + '/../')
 print(sys.path)
 from traveller_api.app import api
-from traveller_api.util import parse_query_string
+from traveller_api.util import parse_query_string, RequestProcessor
+
+LOGGER = logging.getLogger(__name__)
+LOGGER.setLevel(logging.DEBUG)
 
 
 @pytest.fixture
@@ -23,20 +28,19 @@ def client():
 
 def test_parse_query_string_ok(client):
     '''Test valid query string'''
-    for query_strings in ['foo=value1&bar=value2', '']:
-        query_string = 'foo=value1&bar=value2'
-        valid_params = {
-            'foo': '',
-            'bar': ''
-        }
-        expected_query_parameters = {
-            'foo': 'value1',
-            'bar': 'value2'
-        }
-        actual_query_parameters = parse_query_string(
-            query_string,
-            valid_params)
-        assert expected_query_parameters == actual_query_parameters
+    query_string = 'foo=value1&bar=value2'
+    valid_params = {
+        'foo': '',
+        'bar': ''
+    }
+    expected_query_parameters = {
+        'foo': 'value1',
+        'bar': 'value2'
+    }
+    actual_query_parameters = parse_query_string(
+        query_string,
+        valid_params)
+    assert expected_query_parameters == actual_query_parameters
 
 
 def test_parse_query_string_bogus(client):
@@ -52,3 +56,79 @@ def test_parse_query_string_bogus(client):
             query_string=query_string,
             valid_query_parameters=valid_params)
         del actual_query_parameters
+
+
+def test_ping(client):
+    '''Test ping endpoint'''
+    resp = client.simulate_get(
+        '/ping'
+    )
+    assert resp.json["status"] == "OK"
+
+
+class DummyRequest(object):
+    '''Dummy request object for testing get_doc()'''
+
+    def __init__(self):
+        self.prefix = 'http://unittest'
+
+
+class TestRequestProcessor(unittest.TestCase):
+    '''Test RequestProcessor methods'''
+
+    def setUp(self):
+        '''Set up RequestProcessor object'''
+        self.rp = RequestProcessor()
+        self.rp.query_parameters = {
+            'string': '',
+            'number': None,
+            'list': []
+        }
+
+    def tearDown(self):
+        '''Tear down RequestProcessor object'''
+        del self.rp
+
+    def test_parse_query_string(self):
+        '''Test parse_query_string() method'''
+        query_string = 'string=how+long&list=item1&list=item2'
+        self.rp.parse_query_string(query_string)
+        self.assertTrue(
+            self.rp.query_parameters['string'] == 'how+long')
+        self.assertTrue(
+            sorted(self.rp.query_parameters['list']) == ['item1', 'item2'])
+
+        # Empty query string
+        self.rp.query_parameters = {
+            'string': '',
+            'number': None,
+            'list': []
+        }
+        query_string = ''
+        self.rp.parse_query_string(query_string)
+        self.assertTrue(self.rp.query_parameters['string'] == '')
+        self.assertTrue(self.rp.query_parameters['number'] is None)
+        self.assertTrue(self.rp.query_parameters['list'] == [])
+
+        # Repeated list
+        query_string = 'list=item1&list=item1'
+        self.rp.query_parameters['list'] = []
+        self.rp.parse_query_string(query_string)
+        LOGGER.debug(
+            'query_parameters["list"] = %s',
+            self.rp.query_parameters['list'])
+        self.assertTrue(
+            self.rp.query_parameters['list'] == ['item1']
+        )
+
+    def test_get_doc(self):
+        '''Test get_doc() method'''
+        req = DummyRequest()
+        LOGGER.debug('rp.get_doc(req) = %s', self.rp.get_doc(req))
+        self.assertTrue(self.rp.get_doc(req)['doc'] == 'Request processor')
+
+    def test_get_doc_json(self):
+        '''Test get_doc_json() method()'''
+        req = DummyRequest()
+        LOGGER.debug('rp.get_doc(req) = %s', self.rp.get_doc(req))
+        self.assertTrue(self.rp.get_doc(req)['doc'] == 'Request processor')
