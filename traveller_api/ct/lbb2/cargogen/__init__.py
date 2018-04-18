@@ -90,7 +90,7 @@ class Purchase(RequestProcessor):
     - <actual value roll> is the roll on the actual value table
     - <actual value DM> is the DM applied to the actual value roll
 
-    Note: this JSON representation has the same fields as the cargo sale object 
+    Note: this JSON representation has the same fields as the cargo sale object
     available at <apiserver>/ct/lbb2/cargogen/sale
     '''
 
