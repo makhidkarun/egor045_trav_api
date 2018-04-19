@@ -1,66 +1,20 @@
 '''star.py'''
 
-import re
-import os
 import json
+import os
+import re
 import logging
-import falcon
-from .db import Schemas
-from ... import DB
-from ... import Config
+from traveller_api import DB
+from traveller_api.ct.lbb6.db import Schemas
+# from ... import Config
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
-KONFIG = Config()
-config = KONFIG.config['traveller_api.ct.lbb6']
-
 
 class Star(object):
     '''Star class'''
-
-    def __init__(self):
-        self.clear_data()
-        # Path
-        sqlite_file = '{}/{}'.format(
-            os.path.dirname(os.path.realpath(__file__)),
-            config.get('dbfile'))
-        self.db = DB(sqlite_file)
-        self.session = self.db.session()
-
-    def on_get(self, req, resp, code):
-        '''GET /ct/lbb6/star/<code>'''
-        self.clear_data()
-        self._validate_code(code)
-        self.get_classification()
-        self.get_details()
-        self.calculate_hz_period()
-
-        if self.type is None:
-            resp.body = json.dumps({
-                'message': 'Invalid star classification'
-            })
-            resp.status = falcon.HTTP_400
-        else:
-            doc = {
-                'type': self.type,
-                'decimal': self.decimal,
-                'size': self.size,
-                'min_orbit': self.min_orbit,
-                'hz_orbit': self.hz_orbit,
-                'magnitude': self.magnitude,
-                'luminosity': self.luminosity,
-                'temperature': self.temperature,
-                'radius': self.radius,
-                'mass': self.mass,
-                'hz_period': self.hz_period,
-                'int_orbit': self.int_orbit
-            }
-            resp.body = json.dumps(doc)
-            resp.status = falcon.HTTP_200
-
-    def clear_data(self):
-        '''Clear data on new request'''
+    def __init__(self, code):
         self.type = None
         self.decimal = None
         self.size = None
@@ -74,6 +28,25 @@ class Star(object):
         self.mass = 0
         self.hz_period = None
         self.classification = None
+        self.notes = []
+
+        # Leave this as is until config gets sorted out
+        '''sqlite_file = '{}/{}'.format(
+            os.path.dirname(os.path.realpath(__file__)),
+            config.get('dbfile'))'''
+        sqlite_file = '{}/{}'.format(
+            os.path.dirname(os.path.realpath(__file__)),
+            'star.sqlite'
+        )
+        LOGGER.debug('sqlite_file = %s', sqlite_file)
+        self.database = DB(sqlite_file)
+        self.session = self.database.session()
+
+        # Do stuff
+        self._validate_code(code)
+        self.get_classification()
+        self.get_details()
+        self.calculate_hz_period()
 
     def _validate_code(self, code):
         '''Validate code -> type, decimal, size'''
@@ -96,7 +69,7 @@ class Star(object):
             if mtch.group(3) in ['Ia', 'Ib', 'II', 'III', 'IV', 'V', 'VI']:
                 self.size = mtch.group(3)
             else:
-                raise TypeError
+                raise TypeError('Invalid size {}'.format(mtch.group(3)))
             LOGGER.debug(
                 'type = %s decimal = %s size = %s',
                 self.type, self.decimal, self.size)
@@ -119,6 +92,8 @@ class Star(object):
                 # F[0-4] VI not possible, use V instead
                 if self.type == 'F' and self.decimal <= 4:
                     self.size = 'V'
+        else:
+            raise TypeError('Unknown code/type {}'.format(code))
 
     def _validate_code_dwarf(self, code):
         '''Validate code for dwarf'''
@@ -157,6 +132,13 @@ class Star(object):
             self.radius = details.radius
             self.mass = details.mass
             self.int_orbit = details.int_orbit
+        else:
+            raise TypeError(
+                'Unknown star {}{} {}'.format(
+                    self.type,
+                    self.decimal,
+                    self.size)
+            )
 
     def calculate_hz_period(self):
         '''Calculate period of planet in HZ orbit'''
@@ -172,3 +154,21 @@ class Star(object):
         if self.type:
             self.classification = '{0}{1} {2}'.format(
                 self.type, self.decimal, self.size)
+
+    def json(self):
+        '''JSON representation'''
+        doc = {
+            'type': self.type,
+            'decimal': self.decimal,
+            'size': self.size,
+            'min_orbit': self.min_orbit,
+            'hz_orbit': self.hz_orbit,
+            'hz_period': self.hz_period,
+            'magnitude': self.magnitude,
+            'luminosity': self.luminosity,
+            'temperature': self.temperature,
+            'radius': self.radius,
+            'mass': self.mass,
+            'classification': self.classification
+        }
+        return json.dumps(doc)
