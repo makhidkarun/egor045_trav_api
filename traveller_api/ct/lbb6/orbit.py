@@ -43,6 +43,7 @@ class Orbit(object):
         if self.star is not None:
             self.determine_period()
             self.determine_angular_diameter()
+            self.determine_interior_orbits()
 
     def get_details(self, orbit_no):
         '''Get orbital radius (Mkm, AU)'''

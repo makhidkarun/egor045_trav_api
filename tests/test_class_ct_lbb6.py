@@ -1,12 +1,14 @@
 '''CT LBB6 unit tests'''
 
-# pragma pylint: disable=C0413
+# pragma pylint: disable=C0413, W0613
 
 import json
 import logging
 import os
 import sys
 import unittest
+import requests
+from mock import patch
 sys.path.insert(
     0,
     os.path.dirname(os.path.abspath(__file__)) + '/../')
@@ -15,6 +17,12 @@ from traveller_api.ct.lbb6.orbit import Orbit
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
+
+def mock_requests_get_error(req_string):
+    '''Mock unable to connect'''
+    del req_string
+    raise requests.ConnectionError
+
 
 class TestStar(unittest.TestCase):
     '''Star() unit tests'''
@@ -98,6 +106,7 @@ class TestOrbit(unittest.TestCase):
         for orbit_no in [0, 19]:
             orbit = Orbit(orbit_no)
             self.assertTrue(orbit_no == orbit.orbit_no)
+            self.assertTrue(orbit.period is None)
         orbit = Orbit(3, Star('G2 V'))
         self.assertTrue(orbit.orbit_no == 3)
         self.assertTrue(str(orbit.star) == 'G2 V')
@@ -114,3 +123,20 @@ class TestOrbit(unittest.TestCase):
         self.assertTrue(orbit.period == 1.0)
         orbit = Orbit(2)
         self.assertTrue(orbit.period is None)
+
+    @patch('requests.get', side_effect=mock_requests_get_error)
+    def test_angdia(self, mock_fn):
+        '''Test angdia response if API server is down'''
+        orbit = Orbit(3, Star('G2 V'))
+        self.assertTrue(
+            'Unable to connect to API endpoint http://api.trav.phraction.org' in orbit.notes
+        )
+    
+    def test_interior_orbit(self):
+        '''Test for interior orbit'''
+        orbit = Orbit(2, Star('B5 V'))
+        LOGGER.debug('notes = %s', orbit.notes)
+        self.assertTrue(
+            'Orbit 2 is unavailable to B5 V star; minimum orbit is 3' in \
+                orbit.notes
+        )
