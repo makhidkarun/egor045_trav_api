@@ -171,4 +171,14 @@ class Star(object):
             'mass': self.mass,
             'classification': self.classification
         }
-        return json.dumps(doc)
+        return json.dumps(doc, sort_keys=True)
+
+    def __str__(self):
+        if self.size == 'D':
+            return '{} D'.format(self.type)
+        else:
+            return '{}{} {}'.format(
+                self.type,
+                self.decimal,
+                self.size
+            )
