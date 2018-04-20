@@ -106,8 +106,8 @@ class LBB6Planet(Planet):
     '''LBB6 planet - extends basic CT planet'''
 
     valid_uwp = re.compile(
-        r'^([A-GXY])([0-9A-Z])([0-9A-Z])' +
-        r'([0-9A-Z])([0-9A-Z])([0-9A-Z])([0-9A-Z])\-?([0-9A-Z])$')
+        r'^([A-GXY])([0-9AS])([0-9A-F])' +
+        r'([0-9A])([0-9A])([0-9A-D])([0-9A-Z])\-?([0-9A-Z])$')
 
 
     def __init__(self, name='', uwp=None):
@@ -281,3 +281,15 @@ class LBB6Planet(Planet):
         # Ic
         if int(self.atmosphere) <= 1 and int(self.hydrographics) >= 1:
             self.trade_codes.append('Ic')
+
+    def determine_cloudiness(self):
+        '''Determine cloudiness (dep hydrographics, atmosphere)'''
+        pass
+    
+    def determine_albedo(self):
+        '''Determine albedo range'''
+        pass
+    
+    def determine_temperature_range(self):
+        '''Determine temperature range'''
+        pass
