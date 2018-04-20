@@ -106,7 +106,16 @@ class Orbit(object):
     def determine_interior_orbits(self):
         '''Determine internal orbits'''
         if self.star is not None:
-            if self.orbit_no <= self.star.min_orbit:
+            # Interior orbit
+            if self.star.int_orbit is not None and\
+                    self.orbit_no <= self.star.int_orbit:
+                self.notes.append(
+                    'Orbit {} is within {} star; minimum orbit is {}'.format(
+                        self.orbit_no, str(self.star), self.star.min_orbit
+                    )
+                )
+            # Minimum orbit
+            elif self.orbit_no <= self.star.min_orbit:
                 self.notes.append(
                     'Orbit {} is unavailable to {} star; minimum orbit is {}'.format(
                         self.orbit_no, str(self.star), self.star.min_orbit

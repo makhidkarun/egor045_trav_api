@@ -132,12 +132,20 @@ class TestOrbit(unittest.TestCase):
         self.assertTrue(
             'Unable to connect to API endpoint http://api.trav.phraction.org' in orbit.notes
         )
-    
-    def test_interior_orbit(self):
-        '''Test for interior orbit'''
+
+    def test_unavailable_orbits(self):
+        '''Test for interior orbit, mnimum orbit'''
+        # Interior orbit
+        orbit = Orbit(2, Star('M9 Ia'))
+        LOGGER.debug('notes = %s', orbit.notes)
+        self.assertTrue(
+            'Orbit 2 is within M9 Ia star; minimum orbit is 8' in \
+            orbit.notes
+        )
+        # Minimum orbit
         orbit = Orbit(2, Star('B5 V'))
         LOGGER.debug('notes = %s', orbit.notes)
         self.assertTrue(
             'Orbit 2 is unavailable to B5 V star; minimum orbit is 3' in \
-                orbit.notes
+            orbit.notes
         )
