@@ -84,6 +84,7 @@ class TestStar(unittest.TestCase):
             "temperature": 5800,
             "radius": 0.98,
             "mass": 1.0,
+            "int_orbit": None,
             "classification": "G2 V"
         }, sort_keys=True)
         code = 'G2 V'
