@@ -18,3 +18,5 @@ venv*
 .pytest_cache/
 *.sublime-*
 *.code-workspace
+htmlcov
+.coverage
