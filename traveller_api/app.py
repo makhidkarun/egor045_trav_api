@@ -3,7 +3,7 @@
 import falcon
 import traveller_api.ct as ct
 import traveller_api.misc as misc
-import traveller_api.mt as mt
+# import traveller_api.mt as mt
 import traveller_api.t5.cargogen as t5_cargogen
 import traveller_api.t5.orbit as t5_orbit
 import traveller_api.util as util
@@ -19,7 +19,7 @@ api = application = falcon.API(
 api.add_route('/misc/angdia', misc.AngDia())
 
 # Classic Traveller APIs
-api.add_route('/ct/lbb6/star/{code}', ct.lbb6.star.Star())
+'''api.add_route('/ct/lbb6/star/{code}', ct.lbb6.star.Star())
 api.add_route(
     '/ct/lbb6/star/{code}/orbit/{orbit_no:int}',
     ct.lbb6.orbit.Orbit())
@@ -31,7 +31,7 @@ api.add_route(
 api.add_route('/mt/wbh/star/{code}', mt.wbh.star.Star())
 api.add_route(
     '/mt/wbh/star/{code}/orbit/{orbit_no:int}',
-    mt.wbh.orbit.Orbit())
+    mt.wbh.orbit.Orbit())'''
 
 # T5 Cargogen API
 api.add_route('/t5/cargogen', t5_cargogen.CargoGen())
