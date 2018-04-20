@@ -169,6 +169,7 @@ class Star(object):
             'temperature': self.temperature,
             'radius': self.radius,
             'mass': self.mass,
+            'int_orbit': self.int_orbit,
             'classification': self.classification
         }
         return json.dumps(doc, sort_keys=True)
