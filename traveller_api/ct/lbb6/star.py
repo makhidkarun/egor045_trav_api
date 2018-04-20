@@ -9,7 +9,7 @@ from traveller_api.ct.lbb6.db import Schemas
 # from ... import Config
 
 LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(logging.DEBUG)
+LOGGER.setLevel(logging.ERROR)
 
 
 class Star(object):
