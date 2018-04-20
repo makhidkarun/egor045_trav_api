@@ -1,325 +1,267 @@
 '''planet.py'''
 
-import logging
+# pragma pylint: disable=W0221, C0103
+
 import json
-import re
-import requests
-import falcon
-from random import seed, randint
+import logging
 from ehex import ehex
+from traveller_api.ct.planet import Planet
+from traveller_api.ct.util import Die
+
+D6 = Die(6)
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
+class EhexSize(ehex):
+    '''Extend ehex to account for size S (=0)'''
+    def __init__(self, value=0):
+        self.is_s = False
+        super().__init__(value)
+        if self._value == 26:   # S
+            self.is_s = True
+            self._value = 0
 
-class Planet(object):
-    '''Planet class'''
-
-    def __init__(self):
-        seed()
-        self.clear_data()
-
-    def on_get(self, req, resp, code, orbit_no, uwp):
-        '''GET /ct/lbb6/star/<code>/<star>/orbit/<orbit>/planet/<uwp>'''
-        self.clear_data()
-        self.get_star(code)
-        if self.star is None:
-            resp.body = json.dumps({
-                'message': 'Invalid star classification'
-            })
-            resp.status = falcon.HTTP_400
+    def __str__(self):
+        if self.is_s is True:
+            return 'S'
         else:
-            self.get_orbit(code, orbit_no)
-            LOGGER.debug('Got orbit, is %s', self.orbit)
-            if self.orbit is None:
-                resp.body = json.dumps({
-                    'message': 'Invalid orbit number'
-                })
-                resp.status = falcon.HTTP_400
-            else:
-                self.process_uwp(uwp)
-                if self.uwp is None:
-                    resp.body = json.dumps({
-                        'message': 'Invalid UWP'
-                    })
-                    resp.status = falcon.HTTP_400
-                else:
-                    self.determine_trade_classifications()
-                    self.determine_cloudiness()
-                    self.determine_albedo()
-                    self.determine_temperature()
+            return self.valid[self._value]
 
-                    doc = {
-                        'uwp': self.uwp,
-                        'trade_classifications': self.trade_classifications,
-                        'cloudiness': self.cloudiness,
-                        'albedo': self.albedo,
-                        'temperature': self.temperature
+    def __repr__(self):
+        if self.is_s is True:
+            return 'S'
+        else:
+            return self.valid[self._value]
 
-                    }
-                    resp.body = json.dumps(doc)
-                    resp.status = falcon.HTTP_200
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return self.valid[self._value] == other or (self.is_s and other == 'S')
+        elif isinstance(other, int):
+            return self._value == other
+        elif isinstance(other, ehex):
+            return self._value == int(other)
+        else:
+            raise TypeError(
+                '%s %s should be ehex, int or str' % (type(other), other))
 
-    def clear_data(self):
-        '''Clear data for new request'''
-        self.uwp = None
-        self.starport = None
-        self.size = None
-        self.atmosphere = None
-        self.hydrographics = None
-        self.population = None
-        self.government = None
-        self.lawlevel = None
-        self.techlevel = None
-        self.trade_classifications = []
-        self.cloudiness = None
-        self.orbit = None
+    def __ne__(self, other):
+        if isinstance(other, str):
+            return self.valid[self._value] != other or (self.is_s and other != 'S')
+        elif isinstance(other, int):
+            return self._value != other
+        elif isinstance(other, ehex):
+            return self._value != int(other)
+        else:
+            raise TypeError(
+                '%s %s should be ehex, int or str' % (type(other), other))
+
+    def __lt__(self, other):
+        if isinstance(other, str):
+            return self.valid[self._value] < other or (self.is_s and other < 'S')
+        elif isinstance(other, int):
+            return self._value < other
+        elif isinstance(other, ehex):
+            return self._value < int(other)
+        else:
+            raise TypeError(
+                '%s %s should be ehex, int or str' % (type(other), other))
+
+    def __gt__(self, other):
+        if isinstance(other, str):
+            return self.valid[self._value] > other or (self.is_s and other > 'S')
+        elif isinstance(other, int):
+            return self._value > other
+        elif isinstance(other, ehex):
+            return self._value > int(other)
+        else:
+            raise TypeError(
+                '%s %s should be ehex, int or str' % (type(other), other))
+
+    def __le__(self, other):
+        if isinstance(other, str):
+            return self.valid[self._value] <= other or (self.is_s and other <= 'S')
+        elif isinstance(other, int):
+            return self._value <= other
+        elif isinstance(other, ehex):
+            return self._value <= int(other)
+        else:
+            raise TypeError(
+                '%s %s should be ehex, int or str' % (type(other), other))
+
+    def __ge__(self, other):
+        if isinstance(other, str):
+            return self.valid[self._value] >= other or (self.is_s and other >= 'S')
+        elif isinstance(other, int):
+            return self._value >= other
+        elif isinstance(other, ehex):
+            return self._value >= int(other)
+        else:
+            raise TypeError(
+                '%s %s should be ehex, int or str' % (type(other), other))
+
+
+class LBB6Planet(Planet):
+    '''LBB6 planet - extends basic CT planet'''
+
+    def __init__(self, name='', uwp=None):
+        super().__init__(name=name, uwp=uwp)
+        # Extra properties
+        self.is_mainworld = True
         self.star = None
-        self.albedo = {}
-        self.temperature = {}
-        for field in ['min', 'max']:
-            self.albedo[field] = None
-            self.temperature[field] = None
+        self.orbit = None
 
-    def get_star(self, code):
-        '''Get star details'''
-        LOGGER.debug('Querying API endpoint for star type %s', code)
-        resp = requests.get(
-            'http://localhost:8000/ct/lbb6/star/{}'.format(code))
-        LOGGER.debug('Done, response status = %s', resp.status_code)
-        LOGGER.debug('resp.json() = %s', resp.json())
-        if resp.status_code == 200:
-            self.star = resp.json()
+    def generate(self, is_mainworld=True, star=None, orbit=None):
+        '''Generate, including star/orbit'''
+        self.is_mainworld = is_mainworld
+        self.star = star
+        self.orbit = orbit
+        self._generate_size()
+        self._generate_atmosphere()
+        self._generate_hydrographics()
+        self.population = ehex(D6.roll(2, -2))
+        self.government = ehex(D6.roll(2, int(self.population) - 7, 0, 13))
+        self.lawlevel = ehex(D6.roll(2, int(self.government) - 7, 0, 9))
+        self.starport = self._generate_starport()
+        self._generate_techlevel()
+        self._determine_trade_codes()
+        self._determine_env_trade_codes()
 
-    def get_orbit(self, code, orbit_no):
-        '''Get orbit details'''
-        LOGGER.debug(
-            'Querying API endpoint for star type %s, orbit %d',
-            code,
-            orbit_no)
-        resp = requests.get(
-            'http://localhost:8000/ct/lbb6/star/{}/orbit/{}'.format(
-                code,
-                orbit_no))
-        LOGGER.debug('Done, response status = %s', resp.status_code)
-        LOGGER.debug('resp.json() = %s', resp.json())
-        if resp.status_code == 200:
-            self.orbit = resp.json()
+    def _generate_starport(self):
+        '''Generate starport'''
+        if self.is_mainworld is True:
+            starport = 'X'
+            roll = D6.roll(2)
+            LOGGER.debug('roll = %s', roll)
 
-    def process_uwp(self, uwp):
-        '''Process UWP, populate variables'''
-        LOGGER.debug('uwp = %s', uwp)
-        re_uwp = r'([A-HYX])([0-9AS])([0-9A-F])([0-9A])([0-9A])' +\
-            r'([0-9A-F])([0-9A-HJ-NP-Z)])\-([0-9A-HJ-NP-Z)])'
-        if uwp:
-            mtch = re.match(re_uwp, str(uwp))
-            if mtch:
-                LOGGER.debug('UWP %s matches RE', uwp)
-                self.uwp = uwp
-                self.starport = mtch.group(1)
-                self.size = ehex(mtch.group(2))
-                self.atmosphere = ehex(mtch.group(3))
-                self.hydrographics = ehex(mtch.group(4))
-                self.population = ehex(mtch.group(5))
-                self.government = ehex(mtch.group(6))
-                self.lawlevel = ehex(mtch.group(7))
-                self.techlevel = ehex(mtch.group(8))
-        LOGGER.debug('self.uwp = %s', self.uwp)
-
-    def determine_trade_classifications(self):
-        '''Determine trade classifications'''
-        LOGGER.debug('uwp = %s', self.uwp)
-        if self.uwp:
-            trade_classifications = []
-            # Agricultural - Ag
-            if (str(self.atmosphere) in '56789' and
-                    str(self.hydrographics) in '45678' and
-                    str(self.population) in '567'):
-                LOGGER.debug('Adding trade classification Ag')
-                trade_classifications.append('Ag')
-            # Non-agricultural - Na
-            if (str(self.atmosphere) in '0123' and
-                    str(self.hydrographics) in '0123' and
-                    self.population >= '6'):
-                LOGGER.debug('Adding trade classification Na')
-                trade_classifications.append('Na')
-            # Industrial - In
-            if (str(self.atmosphere) in '0123479' and
-                    self.population >= '9'):
-                LOGGER.debug('Adding trade classification In')
-                trade_classifications.append('In')
-            # Non-industrial - Ni
-            if self.population <= '6':
-                LOGGER.debug('Adding trade classification Ni')
-                trade_classifications.append('Ni')
-            # Rich - Ri
-            if (str(self.atmosphere) in '68' and
-                    str(self.population) in '678' and
-                    str(self.government) in '456789'):
-                LOGGER.debug('Adding trade classification Ri')
-                trade_classifications.append('Ri')
-            # Poor - Po
-            if (str(self.atmosphere) in '2345' and
-                    str(self.hydrographics) in '0123'):
-                LOGGER.debug('Adding trade classification Po')
-                trade_classifications.append('Po')
-            # Water world - Wa
-            if self.hydrographics == 'A':
-                LOGGER.debug('Adding trade classification Wa')
-                trade_classifications.append('Wa')
-            # Desert world - De
-            if (self.hydrographics == '0' and
-                    self.atmosphere >= '2'):
-                LOGGER.debug('Adding trade classification De')
-                trade_classifications.append('De')
-            # Vacuum world - Va
-            if self.atmosphere == '0':
-                LOGGER.debug('Adding trade classification Va')
-                trade_classifications.append('Va')
-            # Asteroid belt - As
-            if self.size == 0:
-                LOGGER.debug('Adding trade classification As')
-                trade_classifications.append('As')
-            # Ice-capped - Ic
-            if (str(self.atmosphere) in '01' and
-                    str(self.hydrographics) in '123456789A'):
-                LOGGER.debug('Adding trade classification Ic')
-                trade_classifications.append('Ic')
-
-            trade_classifications.sort()
-            self.trade_classifications = trade_classifications
-
-    def determine_cloudiness(self):
-        '''Determine cloudiness'''
-        if self.uwp:
-            if str(self.hydrographics) in '01':
-                self.cloudiness = 0.0
-            elif str(self.hydrographics) in '23':
-                self.cloudiness = 0.1
-            elif str(self.hydrographics) == '4':
-                self.cloudiness = 0.2
-            elif str(self.hydrographics) == '5':
-                self.cloudiness = 0.3
-            elif str(self.hydrographics) == '6':
-                self.cloudiness = 0.4
-            elif str(self.hydrographics) == '7':
-                self.cloudiness = 0.5
-            elif str(self.hydrographics) == '8':
-                self.cloudiness = 0.6
-            elif str(self.hydrographics) in '9A':
-                self.cloudiness = 0.7
-            # Atmosphere effects
-            if self.atmosphere >= 'A':
-                self.cloudiness = min(
-                    1.0,
-                    self.cloudiness + 0.4)
-            if self.atmosphere <= '3':
-                LOGGER.debug(
-                    'Atm 3-: setting cloudiness to min(0.2, %s)',
-                    self.cloudiness)
-                self.cloudiness = min(0.2, self.cloudiness)
-                LOGGER.debug('cloudiness = %s', self.cloudiness)
-            if self.atmosphere == 'E':
-                self.cloudiness = self.cloudiness / 2.0
-            LOGGER.debug('cloudiness = %s', self.cloudiness)
-
-    def determine_albedo(self):
-        '''Determine albedo'''
-        if self.uwp:
-            # Desert (De) => hyd == 0 => no clouds
-            if 'De' in self.trade_classifications:
-                self.albedo['min'] = 0.2
-                self.albedo['max'] = 0.2
-            # Ice-capped (Ic) => hyd = dirty ice, remainder is rock
-            # Ignore clouds - atm  == 0 or 1
-            elif 'Ic' in self.trade_classifications:
-                # Ice component
-                albedo = (int(self.hydrographics) / 100.0) * 0.55
-                # Rock component
-                albedo += (1.0 - int(self.hydrographics) / 100.0) * 0.2
-                self.albedo['min'] = round(albedo, 3)
-                self.albedo['max'] = round(albedo, 3)
+            if roll <= 4:
+                starport = 'A'
+            elif roll >= 5 and roll <= 6:
+                starport = 'B'
+            elif roll >= 7 and roll <= 8:
+                starport = 'C'
+            elif roll == 9:
+                starport = 'D'
+            elif roll >= 10 and roll <= 11:
+                starport = 'E'
+        else:
+            die_mod = 0
+            if int(self.population) >= 6:
+                die_mod += 2
+            if int(self.population) == 1:
+                die_mod -= 2
+            if int(self.population) == 0:
+                die_mod -= 3
+            roll = D6.roll(1, die_mod)
+            if roll <= 2:
+                starport = 'Y'
+            elif roll == 3:
+                starport = 'H'
+            elif roll >= 4 and roll <= 5:
+                starport = 'G'
             else:
-                '''
-                Other worlds - use min-max approach
-                Cloudiness % = albedo for clouds = 0.4 - 0.8
-                Ice cap % = 5% - 10%, albedo = 0.85
-                Water = hydrograpics, albedo = 0.02
-                Land = 1 - hydrographics %, albedo = 0.1 - 0.2
+                starport = 'F'
+        return starport
 
-                Minimum albedo =
-                    %cloud * 0.4 +
-                    (1 - %cloud) * (
-                        %ice * 0.85 +
-                        (1 - %ice) * (
-                            %water * 0.02 +
-                            (1 - %water) * 0.1
-                        )
-                    )
-                '''
-                self.albedo['min'] = round(
-                    self.cloudiness * 0.4 + (1 - self.cloudiness) * (
-                        0.05 * 0.85 +
-                        0.95 * (
-                            int(self.hydrographics) / 100.0 * 0.02 +
-                            (1 - int(self.hydrographics) / 100.0) * 0.1
-                        )),
-                    3)
-                '''
-                Maximum albedo =
-                    %cloud * 0.8 +
-                    (1 - %cloud) * (
-                        %ice * 0.85 +
-                        (1 - %ice) * (
-                            %water * 0.02 +
-                            (1 - %water) * 0.2
-                        )
-                    )
-                '''
-                self.albedo['max'] = round(
-                    self.cloudiness * 0.8 + (1 - self.cloudiness) * (
-                        0.10 * 0.85 +
-                        0.90 * (
-                            int(self.hydrographics) / 100 * 0.02 +
-                            (1 - int(self.hydrographics) / 100) * 0.2
-                        )),
-                    3)
-            LOGGER.debug(
-                'Albedo (min, max) = (%s, %s)',
-                self.albedo['min'],
-                self.albedo['max'])
+    def _generate_size(self):
+        '''LBB6 size'''
+        die_mod = -2
+        if self.orbit is not None:
+            if self.orbit.orbit_no == 0:
+                die_mod -= 5
+            if self.orbit.orbit_no == 1:
+                die_mod -= 4
+        if self.star is not None:
+            if self.star.type == 'M':
+                die_mod -= 2
+        self.size = EhexSize(D6.roll(2, die_mod, ceiling=12))
+        if int(self.size) == 0 and self.is_mainworld is False:
+            self.size = EhexSize('S')
 
-    def determine_temperature(self):
-        '''Determine temperature'''
-        if self.uwp and self.orbit and self.star:
-            greenhouse = self._determine_greenhouse_effect()
-            LOGGER.debug('Greenhouse effect = %s', greenhouse)
-            self.temperature['max'] = round(
-                374.025 * greenhouse *
-                (1 - self.albedo['min']) *
-                self.star['luminosity'] ** 0.25 / self.orbit['au'] ** 0.5,
-                3)
-            self.temperature['min'] = round(
-                374.025 * greenhouse *
-                (1 - self.albedo['max']) *
-                self.star['luminosity'] ** 0.25 / self.orbit['au'] ** 0.5,
-                3)
-            LOGGER.debug(
-                'temperature = (%s, %s)',
-                self.temperature['min'],
-                self.temperature['max'])
+    def _generate_atmosphere(self):
+        '''
+        Generate atmosphere
+        2D-7 + size
+        Inner zone: DM -2
+        Outer zone: DM -2
+        Size 0 or S: atm = 0
+        Outer zone +2: roll 12 for A (0 otherwise)
+        '''
+        if int(self.size) == 0:     # 0 or S
+            self.atmosphere = ehex(0)
+            return
+        die_mod = 0
+        if self.star is not None and self.orbit is not None:
+            if self.orbit.orbit_no < self.star.hz_orbit:
+                die_mod -= 2
+            if self.orbit.orbit_no > self.star.hz_orbit:
+                die_mod -= 2
+            if self.orbit.orbit_no - self.star.hz_orbit >= 2:
+                if D6.roll(2) == 12:
+                    self.atmosphere = ehex('A')
+                else:
+                    self.atmosphere = ehex(0)
+                return
+        self.atmosphere = D6.roll(2, die_mod, ceiling=12)
 
-    def _determine_greenhouse_effect(self):
-        '''Determine greenhouse effect'''
-        if str(self.atmosphere) in '0123F':
-            return 1.0
-        if str(self.atmosphere) in '45':
-            return 1.05
-        if str(self.atmosphere) in '67E':
-            return 1.1
-        if str(self.atmosphere) in '89D':
-            return 1.15
-        if str(self.atmosphere) == 'A':
-            return 1.0 + (randint(1, 6) + 1) / 10.0
-        if str(self.atmosphere) in 'BC':
-            return 1.0 + (randint(1, 6) + randint(1, 6)) / 10.0
+    def _generate_hydrographics(self):
+        '''
+        LBB6 hydrographics
+        2D-7 + size
+        * Inner zone: hyd = 0
+        * Outer zone: DM -4
+        * Size 1- or S: hyd = 0
+        * Atmosphere 1- or A+: DM -4
+        '''
+        # Orbit-related
+        die_mod = 0
+        if self.star is not None and self.orbit is not None:
+            if self.orbit.orbit_no < self.star.hz_orbit:
+                self.hydrographics = ehex(0)
+                return
+            if self.orbit.orbit_no > self.star.hz_orbit:
+                die_mod -= 4
+
+        # Size-related
+        if int(self.size) <= 1:
+            self.hydrographics = ehex(0)
+            return
+
+        # Atmosphere-related
+        if str(self.atmosphere) in '01ABCDEF':
+            die_mod -= 4
+
+        self.hydrographics = ehex(
+            D6.roll(2, int(self.size) - 7 + die_mod, 0, 10)
+        )
+
+    def json(self):
+        '''Return JSON representation'''
+        doc = {
+            'name': self.name,
+            'uwp': str(self),
+            'trade_codes': self.trade_codes,
+            'is_mainworld': self.is_mainworld,
+            'star': str(self.star),
+            'orbit': str(self.orbit)
+        }
+        return json.dumps(doc, sort_keys=True)
+
+    def _determine_env_trade_codes(self):
+        '''Generate environmental trade codes Wa, De, Va, As, Ic'''
+        # Wa
+        if str(self.hydrographics) == 'A':
+            self.trade_codes.append('Wa')
+        # De
+        if str(self.hydrographics) == '0' and \
+                int(self.atmosphere) <= 2:
+            self.trade_codes.append('De')
+        # Va
+        if int(self.atmosphere) == 0:
+            self.trade_codes.append('Va')
+        # As
+        if int(self.size) == 0 and self.is_mainworld:
+            self.trade_codes.append('As')
+        # Ic
+        if int(self.atmosphere) <= 1 and int(self.hydrographics) >= 1:
+            self.trade_codes.append('Ic')
