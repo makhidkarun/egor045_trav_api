@@ -11,7 +11,7 @@ from traveller_api.ct.lbb6.db import Schemas
 # from ... import Config
 
 LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(logging.DEBUG)
+LOGGER.setLevel(logging.ERROR)
 
 
 class Orbit(object):
@@ -121,3 +121,10 @@ class Orbit(object):
                         self.orbit_no, str(self.star), self.star.min_orbit
                     )
                 )
+
+    def __str__(self):
+        return 'Orbit {:d}: {:.1f} AU, {:.1f} Mkm'.format(
+            self.orbit_no,
+            self.au,
+            self.mkm
+        )

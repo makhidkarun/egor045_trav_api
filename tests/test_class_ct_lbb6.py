@@ -149,3 +149,9 @@ class TestOrbit(unittest.TestCase):
             'Orbit 2 is unavailable to B5 V star; minimum orbit is 3' in \
             orbit.notes
         )
+    
+    def test_str(self):
+        '''Test str() representation'''
+        orbit = Orbit(3)
+        LOGGER.debug('str(orbit) = %s', str(orbit))
+        self.assertTrue(str(orbit) == 'Orbit 3: 1.0 AU, 149.6 Mkm')
