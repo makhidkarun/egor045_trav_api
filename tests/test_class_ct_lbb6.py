@@ -411,3 +411,67 @@ class TestLBB6Planet(unittest.TestCase):
         planet = LBB6Planet()
         planet.generate(star=star, orbit=Orbit(11))
         self.assertTrue(str(planet.atmosphere) in '0A')
+
+
+class TestLBB6PlanetTemp(unittest.TestCase):
+    '''Unit tests for albedo, cloudiness, temperature'''
+    def test_albedo(self):
+        '''Albedo tests'''
+        pass
+
+    def test_cloudiness(self):
+        '''
+        Cloudiness tests
+        hyd 0-1: cloudiness = 0%
+        hyd 2-3: cloudiness = 10%
+        hyd 4: cloudiness = 20%
+        hyd 5: cloudiness = 30%
+        hyd 6: cloudiness = 40%
+        hyd 7: cloudiness = 50%
+        hyd 8: cloudiness = 60%
+        hyd 9-A: cloudiness = 70%
+        atm A+: cloudiness +40%
+        atm 3-: max cloudiness = 20%
+        atm E: cloudiness / 2
+        '''
+        test_cases = [
+            {'hyd': '0', 'cloudiness': 0.0},
+            {'hyd': '1', 'cloudiness': 0.0},
+            {'hyd': '2', 'cloudiness': 0.1},
+            {'hyd': '3', 'cloudiness': 0.1},
+            {'hyd': '4', 'cloudiness': 0.2},
+            {'hyd': '5', 'cloudiness': 0.3},
+            {'hyd': '6', 'cloudiness': 0.4},
+            {'hyd': '7', 'cloudiness': 0.5},
+            {'hyd': '8', 'cloudiness': 0.6},
+            {'hyd': '9', 'cloudiness': 0.7},
+            {'hyd': 'A', 'cloudiness': 0.7}
+        ]
+        planet = LBB6Planet()
+        for test in test_cases:
+            planet.hydrographics = ehex(test['hyd'])
+            for atm in '0123456789ABCDEF':
+                planet.atmosphere = ehex(atm)
+                expected = test['cloudiness']
+                if atm in '0123':
+                    expected = min(expected, 0.2)
+                if atm in 'ABCDEF':
+                    expected += 0.4
+                    expected = min(expected, 1.0)
+                if atm == 'E':
+                    expected = expected / 2.0
+                expected = round(expected, 1)
+                planet.determine_cloudiness()
+                LOGGER.debug(
+                    'hyd = %s, atm = %s, cloudiness = %s, expected = %s',
+                    planet.hydrographics,
+                    planet.atmosphere,
+                    planet.cloudiness,
+                    expected
+                )
+                self.assertTrue(planet.cloudiness == expected)
+
+
+    def test_temperature(self):
+        '''Temperature tests'''
+        pass

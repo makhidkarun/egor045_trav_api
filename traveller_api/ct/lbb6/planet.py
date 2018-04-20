@@ -120,6 +120,9 @@ class LBB6Planet(Planet):
         self.is_mainworld = True
         self.star = None
         self.orbit = None
+        self.cloudiness = None
+        self.albedo = None
+        self.temperature = None
 
     def generate(self, is_mainworld=True, star=None, orbit=None):
         '''Generate, including star/orbit'''
@@ -284,12 +287,29 @@ class LBB6Planet(Planet):
 
     def determine_cloudiness(self):
         '''Determine cloudiness (dep hydrographics, atmosphere)'''
-        pass
-    
+        if str(self.hydrographics) in '01':
+            self.cloudiness = 0.0
+        elif str(self.hydrographics) in '23':
+            self.cloudiness = 0.1
+        elif str(self.hydrographics) in '9A':
+            self.cloudiness = 0.7
+        else:
+            self.cloudiness = float((int(self.hydrographics) - 2) / 10.0)
+
+        # Atmosphere effects
+        if int(self.atmosphere) <= 3:
+            self.cloudiness = min(0.2, self.cloudiness)
+        if str(self.atmosphere) in 'ABCDEF':
+            self.cloudiness += 0.4
+            self.cloudiness = min(self.cloudiness, 1.0)
+        if str(self.atmosphere) == 'E':
+            self.cloudiness = self.cloudiness / 2
+        self.cloudiness = round(self.cloudiness, 1)
+
     def determine_albedo(self):
         '''Determine albedo range'''
         pass
-    
+
     def determine_temperature_range(self):
         '''Determine temperature range'''
         pass
