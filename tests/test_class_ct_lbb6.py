@@ -382,9 +382,11 @@ class TestLBB6Planet(unittest.TestCase):
             "orbit": None,
             "star": None,
             "trade_codes": ["Ni", "Po"],
+            "cloudiness": 0.1,
             "uwp": "B433432-A"
         }, sort_keys=True)
         planet = LBB6Planet(uwp='B433432-A')
+        planet.generate()
         LOGGER.debug('planet.json() = %s', planet.json())
         self.assertTrue(planet.json() == expected)
 
@@ -395,6 +397,7 @@ class TestLBB6Planet(unittest.TestCase):
             "orbit": "Orbit 3: 1.0 AU, 149.6 Mkm",
             "star": "G2 V",
             "trade_codes": ["Ni", "Po"],
+            "cloudiness": 0.1,
             "uwp": "B433432-A"
         }, sort_keys=True)
         planet = LBB6Planet(uwp='B433432-A')

@@ -141,6 +141,7 @@ class LBB6Planet(Planet):
             self._generate_techlevel()
             self._determine_trade_codes()
         self._determine_env_trade_codes()
+        self.determine_cloudiness()
 
     def _generate_starport(self):
         '''Generate starport'''
@@ -258,7 +259,8 @@ class LBB6Planet(Planet):
             'trade_codes': self.trade_codes,
             'is_mainworld': self.is_mainworld,
             'star': None,
-            'orbit': None
+            'orbit': None,
+            'cloudiness': self.cloudiness
         }
         if self.star is not None:
             doc['star'] = str(self.star)
