@@ -167,6 +167,35 @@ class TestOrbit(unittest.TestCase):
         LOGGER.debug('str(orbit) = %s', str(orbit))
         self.assertTrue(str(orbit) == 'Orbit 3: 1.0 AU, 149.6 Mkm')
 
+    def test_json(self):
+        '''Test JSON representation'''
+        # Test with star specfied
+        expected = json.dumps({
+            "angular_diameter": 0.522,
+            "au": 1,
+            "mkm": 149.6,
+            "notes": [],
+            "orbit_no": 3,
+            "period": 1.0,
+            "star": "G2 V"
+        }, sort_keys=True)
+        orbit = Orbit(3, Star('G2 V'))
+        LOGGER.debug('orbit.json() = %s', orbit.json())
+        self.assertTrue(orbit.json() == expected)
+
+        # Test, no star
+        expected = json.dumps({
+            "angular_diameter": None,
+            "au": 1,
+            "mkm": 149.6,
+            "notes": [],
+            "orbit_no": 3,
+            "period": None,
+            "star": None
+        }, sort_keys=True)
+        orbit = Orbit(3)
+        LOGGER.debug('orbit.json() = %s', orbit.json())
+        self.assertTrue(orbit.json() == expected)
 
 class TestEhexSize(unittest.TestCase):
     '''ehex extended for size S unit tests'''
@@ -181,8 +210,36 @@ class TestEhexSize(unittest.TestCase):
         for other in ['S', '0', 0, ehex(0), EhexSize(0)]:
             LOGGER.debug('size = %s other = %s', size, other)
             self.assertTrue(size == other)
+            self.assertTrue(size >= other)
+            self.assertTrue(size <= other)
         for other in ['1', 1, ehex(1), EhexSize(1)]:
             self.assertTrue(size < other)
+            self.assertTrue(size != other)
+            self.assertTrue(size <= other)
+        size = EhexSize('2')
+        for other in ['1', 1, ehex(1), EhexSize(1)]:
+            self.assertTrue(size >= other)
+            self.assertTrue(size > other)
+
+    def test_comparison_exception(self):
+        '''Test comparison exceptions'''
+        other = 1.0
+        size = EhexSize('2')
+        with self.assertRaises(TypeError):
+            _ = size == other
+            _ = size != other
+            _ = size <= other
+            _ = size >= other
+            _ = size < other
+            _ = size > other
+
+    def test_repr(self):
+        '''Test __repr__()'''
+        size = EhexSize('S')
+        size.is_s = True
+        self.assertTrue(repr(size) == 'S')
+        size = EhexSize('3')
+        self.assertTrue(repr(size) == '3')
 
 
 class TestLBB6Planet(unittest.TestCase):
@@ -306,3 +363,51 @@ class TestLBB6Planet(unittest.TestCase):
                 planet._determine_env_trade_codes()
                 LOGGER.debug('planet = %s', str(planet))
                 self.assertFalse('Ic' in planet.trade_codes)
+
+    def test_load_uwp(self):
+        '''Test create with UWP'''
+        planet = LBB6Planet(uwp='B433432-A')
+        self.assertTrue(str(planet) == 'B433432-A')
+
+        planet = LBB6Planet(uwp='YS00000-0')
+        self.assertTrue(str(planet) == 'YS00000-0')
+
+    @patch('traveller_api.ct.util.Die.roll', side_effect=mock_d6_roll_1)
+    def test_json(self, mock_fn):
+        '''Test JSON representation'''
+        # No orbit or star
+        expected = json.dumps({
+            "is_mainworld": True,
+            "name": "",
+            "orbit": None,
+            "star": None,
+            "trade_codes": ["Ni", "Po"],
+            "uwp": "B433432-A"
+        }, sort_keys=True)
+        planet = LBB6Planet(uwp='B433432-A')
+        LOGGER.debug('planet.json() = %s', planet.json())
+        self.assertTrue(planet.json() == expected)
+
+        # Orbit, star
+        expected = json.dumps({
+            "is_mainworld": True,
+            "name": "",
+            "orbit": "Orbit 3: 1.0 AU, 149.6 Mkm",
+            "star": "G2 V",
+            "trade_codes": ["Ni", "Po"],
+            "uwp": "B433432-A"
+        }, sort_keys=True)
+        planet = LBB6Planet(uwp='B433432-A')
+        planet.generate(star=Star('G2 V'), orbit=Orbit(3))
+        LOGGER.debug('planet.json() = %s', planet.json())
+        self.assertTrue(planet.json() == expected)
+
+    def test_non_hz_orbits(self):
+        '''Test non-HZ orbits (hydrographics)'''
+        star = Star('G2 V')
+        planet = LBB6Planet()
+        planet.generate(star=star, orbit=Orbit(1))
+        self.assertTrue(int(planet.hydrographics) == 0)
+        planet = LBB6Planet()
+        planet.generate(star=star, orbit=Orbit(11))
+        self.assertTrue(str(planet.atmosphere) in '0A')

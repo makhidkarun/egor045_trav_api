@@ -4,6 +4,7 @@
 
 import json
 import logging
+import re
 from ehex import ehex
 from traveller_api.ct.planet import Planet
 from traveller_api.ct.util import Die
@@ -104,9 +105,18 @@ class EhexSize(ehex):
 class LBB6Planet(Planet):
     '''LBB6 planet - extends basic CT planet'''
 
+    valid_uwp = re.compile(
+        r'^([A-GXY])([0-9A-Z])([0-9A-Z])' +
+        r'([0-9A-Z])([0-9A-Z])([0-9A-Z])([0-9A-Z])\-?([0-9A-Z])$')
+
+
     def __init__(self, name='', uwp=None):
         super().__init__(name=name, uwp=uwp)
         # Extra properties
+        self.uwp_provided = False
+        if uwp is not None:
+            self.uwp_provided = True
+        LOGGER.debug('uwp_provided = %s', self.uwp_provided)
         self.is_mainworld = True
         self.star = None
         self.orbit = None
@@ -116,15 +126,17 @@ class LBB6Planet(Planet):
         self.is_mainworld = is_mainworld
         self.star = star
         self.orbit = orbit
-        self._generate_size()
-        self._generate_atmosphere()
-        self._generate_hydrographics()
-        self.population = ehex(D6.roll(2, -2))
-        self.government = ehex(D6.roll(2, int(self.population) - 7, 0, 13))
-        self.lawlevel = ehex(D6.roll(2, int(self.government) - 7, 0, 9))
-        self.starport = self._generate_starport()
-        self._generate_techlevel()
-        self._determine_trade_codes()
+        if self.uwp_provided is False:
+            LOGGER.debug('uwp provided')
+            self._generate_size()
+            self._generate_atmosphere()
+            self._generate_hydrographics()
+            self.population = ehex(D6.roll(2, -2))
+            self.government = ehex(D6.roll(2, int(self.population) - 7, 0, 13))
+            self.lawlevel = ehex(D6.roll(2, int(self.government) - 7, 0, 9))
+            self.starport = self._generate_starport()
+            self._generate_techlevel()
+            self._determine_trade_codes()
         self._determine_env_trade_codes()
 
     def _generate_starport(self):
@@ -242,9 +254,13 @@ class LBB6Planet(Planet):
             'uwp': str(self),
             'trade_codes': self.trade_codes,
             'is_mainworld': self.is_mainworld,
-            'star': str(self.star),
-            'orbit': str(self.orbit)
+            'star': None,
+            'orbit': None
         }
+        if self.star is not None:
+            doc['star'] = str(self.star)
+        if self.orbit is not None:
+            doc['orbit'] = str(self.orbit)
         return json.dumps(doc, sort_keys=True)
 
     def _determine_env_trade_codes(self):
