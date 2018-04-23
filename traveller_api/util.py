@@ -126,11 +126,11 @@ class MinMax(object):
                     v_2, type
                 )
             )
-    
+
     def min(self):
         '''Min'''
         return self._min
-    
+
     def max(self):
         '''Max'''
         return self._max
