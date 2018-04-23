@@ -8,6 +8,7 @@ import re
 from ehex import ehex
 from traveller_api.ct.planet import Planet
 from traveller_api.ct.util import Die
+from traveller_api.util import MinMax
 
 D6 = Die(6)
 
@@ -121,8 +122,9 @@ class LBB6Planet(Planet):
         self.star = None
         self.orbit = None
         self.cloudiness = None
-        self.albedo = None
-        self.temperature = None
+        self.greenhouse = MinMax(0, 0)
+        self.albedo = MinMax(0, 0)
+        self.temperature = MinMax(0, 0)
 
     def generate(self, is_mainworld=True, star=None, orbit=None):
         '''Generate, including star/orbit'''
@@ -141,7 +143,10 @@ class LBB6Planet(Planet):
             self._generate_techlevel()
             self._determine_trade_codes()
         self._determine_env_trade_codes()
+        self.determine_greenhouse()
         self.determine_cloudiness()
+        self.determine_albedo()
+        self.determine_temperature_range()
 
     def _generate_starport(self):
         '''Generate starport'''
@@ -260,7 +265,12 @@ class LBB6Planet(Planet):
             'is_mainworld': self.is_mainworld,
             'star': None,
             'orbit': None,
-            'cloudiness': self.cloudiness
+            'temperature_factors': {
+                'cloudiness': self.cloudiness,
+                'albedo': self.albedo.dict(),
+                'greenhouse': self.greenhouse.dict()
+            },
+            'temperature': self.temperature.dict()
         }
         if self.star is not None:
             doc['star'] = str(self.star)
@@ -310,8 +320,141 @@ class LBB6Planet(Planet):
 
     def determine_albedo(self):
         '''Determine albedo range'''
-        pass
+        desert_coverage = self._albedo_determine_desert_coverage()
+        veg_coverage = 1.0 - desert_coverage
+        ice_coverage = self._determine_albedo_ice_coverage()
+
+        (
+            net_land_coverage,
+            net_hydro_coverage
+        ) = self._determine_net_land_hydro_coverage(ice_coverage)
+
+        if self.star is not None and self.orbit is not None:
+            if self.orbit.orbit_no > self.star.hz_orbit:
+                net_hydro_coverage = 0.0
+        non_cloud_albedo = (
+            (
+                desert_coverage * 0.2 +
+                veg_coverage * 0.1
+            ) * net_land_coverage +
+            net_hydro_coverage * 0.02 +
+            ice_coverage * 0.85) * (1.0 - self.cloudiness)
+
+        self.albedo = MinMax(
+            round(self.cloudiness * 0.4 + non_cloud_albedo, 3),
+            round(self.cloudiness * 0.8 + non_cloud_albedo, 3)
+        )
+
+    def _determine_net_land_hydro_coverage(self, ice_coverage):
+        '''
+        land_coverage = (1-Hyd)-ice/2
+        hydro_coverage = Hyd-ice/2
+        '''
+        net_land_coverage = float(((10.0 - int(self.hydrographics)) /10.0)) - ice_coverage
+        net_hydro_coverage = float(int(self.hydrographics) / 10.0) - ice_coverage
+        return (net_land_coverage, net_hydro_coverage)
+
+    def _determine_albedo_ice_coverage(self):
+        '''
+        Determine ice cap coverage
+        Hyd == 0: no ice cap
+        Inner zone: no ice cap
+        Habitable zone: ice cap = 10%
+        Outer zone: ice cap = hydrographics
+
+        Default (no orbit/star): ice cap = 10%
+        '''
+        if self.star is not None and self.orbit is not None:
+            if self.orbit.orbit_no < self.star.hz_orbit:
+                ice_coverage = 0.0
+            if self.orbit.orbit_no == self.star.hz_orbit:
+                ice_coverage = 0.1
+            if self.orbit.orbit_no > self.star.hz_orbit:
+                ice_coverage = float(int(self.hydrographics) / 10.0)
+        else:
+            ice_coverage = 0.1
+
+        return ice_coverage
+
+    def _albedo_determine_desert_coverage(self):
+        '''
+        Split between desert and forest/field ( == veg)
+        Atmosphere <= 2: all desert
+        Hyd = 0: all desert (duh)
+        Desert percentage reduces as hyd increases
+        Desert percentage gets boost as atmosphere is thinner
+        '''
+        # Assume linear relationship between hydrographics and vegetation
+        desert_coverage = float((10 - int(self.hydrographics)) / 10)
+
+        # Vacuum or trace atmosphere => no vegetation
+        if str(self.atmosphere) in '01':
+            desert_coverage = 1.0
+        # Very thin
+        if str(self.atmosphere) in '23':
+            desert_coverage += 0.1
+        if str(self.atmosphere) in '45':
+            desert_coverage += 0.05
+        if str(self.atmosphere) in '89':
+            desert_coverage -= 0.05
+        if str(self.hydrographics) == '0':
+            desert_coverage = 1.0
+        desert_coverage = max(0.0, desert_coverage)
+        desert_coverage = min(1.0, desert_coverage)
+
+        return round(desert_coverage, 2)
+
+    def determine_greenhouse(self):
+        '''Determine greenhouse effect'''
+        if str(self.atmosphere) in '0123F':
+            self.greenhouse = MinMax(1.0, 1.0)
+        elif str(self.atmosphere) in '45':
+            self.greenhouse = MinMax(1.05, 1.05)
+        elif str(self.atmosphere) in '67E':
+            self.greenhouse = MinMax(1.1, 1.1)
+        elif str(self.atmosphere) in '89D':
+            self.greenhouse = MinMax(1.15, 1.15)
+        elif str(self.atmosphere) == 'A':
+            self.greenhouse = MinMax(1.2, 1.7)
+        elif str(self.atmosphere) in 'BC':
+            self.greenhouse = MinMax(1.2, 2.2)
 
     def determine_temperature_range(self):
         '''Determine temperature range'''
-        pass
+        if self.star is not None and self.orbit is not None:
+            self.temperature = MinMax(
+                self._temperature_formula(
+                    self.star.luminosity,
+                    self.albedo.min(),
+                    self.orbit.au,
+                    self.greenhouse.min()
+                ),
+                self._temperature_formula(
+                    self.star.luminosity,
+                    self.albedo.max(),
+                    self.orbit.au,
+                    self.greenhouse.max()
+                )
+            )
+
+    @staticmethod
+    def _temperature_formula(
+            luminosity,
+            albedo,
+            distance,
+            greenhouse
+        ):
+        '''Temperature formula'''
+        LOGGER.debug(
+            'lum %s albedo %s dist %s greenhouse %s',
+            luminosity, albedo, distance, greenhouse
+        )
+        temp = round(
+            374.025 * greenhouse *
+            (1.0 - albedo) *
+            (luminosity ** 0.25) /
+            (distance ** 0.5),
+            0
+        )
+        LOGGER.debug('temp = %d', temp)
+        return temp

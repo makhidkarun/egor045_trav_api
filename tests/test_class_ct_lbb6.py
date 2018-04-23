@@ -197,6 +197,7 @@ class TestOrbit(unittest.TestCase):
         LOGGER.debug('orbit.json() = %s', orbit.json())
         self.assertTrue(orbit.json() == expected)
 
+
 class TestEhexSize(unittest.TestCase):
     '''ehex extended for size S unit tests'''
 
@@ -381,27 +382,39 @@ class TestLBB6Planet(unittest.TestCase):
             "name": "",
             "orbit": None,
             "star": None,
+            "temperature": {"max": 0, "min": 0},
+            "temperature_factors": {
+                "albedo": {"max": 0.257, "min": 0.217},
+                "cloudiness": 0.1,
+                'greenhouse': {"max": 1.0, "min": 1.0}
+            },
             "trade_codes": ["Ni", "Po"],
-            "cloudiness": 0.1,
             "uwp": "B433432-A"
         }, sort_keys=True)
         planet = LBB6Planet(uwp='B433432-A')
         planet.generate()
+        LOGGER.debug('expected      = %s', expected)
         LOGGER.debug('planet.json() = %s', planet.json())
         self.assertTrue(planet.json() == expected)
 
         # Orbit, star
         expected = json.dumps({
             "is_mainworld": True,
-            "name": "",
+            "name": "Planet 9",
             "orbit": "Orbit 3: 1.0 AU, 149.6 Mkm",
             "star": "G2 V",
+            "temperature": {"max": 292.0, "min": 277.0},
+            "temperature_factors": {
+                "albedo": {"max": 0.257, "min": 0.217},
+                "cloudiness": 0.1,
+                'greenhouse': {"max": 1.0, "min": 1.0}
+            },
             "trade_codes": ["Ni", "Po"],
-            "cloudiness": 0.1,
             "uwp": "B433432-A"
         }, sort_keys=True)
-        planet = LBB6Planet(uwp='B433432-A')
+        planet = LBB6Planet('Planet 9', uwp='B433432-A')
         planet.generate(star=Star('G2 V'), orbit=Orbit(3))
+        LOGGER.debug('expected      = %s', expected)
         LOGGER.debug('planet.json() = %s', planet.json())
         self.assertTrue(planet.json() == expected)
 
@@ -420,7 +433,24 @@ class TestLBB6PlanetTemp(unittest.TestCase):
     '''Unit tests for albedo, cloudiness, temperature'''
     def test_albedo(self):
         '''Albedo tests'''
-        pass
+        star = Star('G2 V')
+        tests = [
+            {
+                'uwp': 'A867977-8',
+                'star': star,
+                'orbit': Orbit(3),
+                'expected': (0.262, 0.462)
+            }
+        ]
+        for test in tests:
+            planet = LBB6Planet(uwp=test['uwp'])
+            planet.generate(star=test['star'], orbit=test['orbit'])
+            LOGGER.debug(
+                'uwp = %s TCs = %s albedo = %s',
+                str(planet), planet.trade_codes, str(planet.albedo)
+            )
+            self.assertTrue(planet.albedo.min() == test['expected'][0])
+            self.assertTrue(planet.albedo.max() == test['expected'][1])
 
     def test_cloudiness(self):
         '''
@@ -474,7 +504,112 @@ class TestLBB6PlanetTemp(unittest.TestCase):
                 )
                 self.assertTrue(planet.cloudiness == expected)
 
-
     def test_temperature(self):
         '''Temperature tests'''
         pass
+
+    def test_greenhouse(self):
+        '''Greenhouse tests'''
+        planet = LBB6Planet()
+        tests = [
+            {'atm': '0', 'expected': 1.0},
+            {'atm': '1', 'expected': 1.0},
+            {'atm': '2', 'expected': 1.0},
+            {'atm': '3', 'expected': 1.0},
+            {'atm': '4', 'expected': 1.05},
+            {'atm': '5', 'expected': 1.05},
+            {'atm': '6', 'expected': 1.1},
+            {'atm': '7', 'expected': 1.1},
+            {'atm': '8', 'expected': 1.15},
+            {'atm': '9', 'expected': 1.15},
+            {'atm': 'A', 'expected': (1.2, 1.7)},
+            {'atm': 'B', 'expected': (1.2, 2.2)},
+            {'atm': 'C', 'expected': (1.2, 2.2)},
+            {'atm': 'D', 'expected': 1.15},
+            {'atm': 'E', 'expected': 1.1},
+            {'atm': 'F', 'expected': 1.0},
+        ]
+        for test in tests:
+            planet.atmosphere = ehex(test['atm'])
+            planet.determine_greenhouse()
+            LOGGER.debug(
+                'atm = %s expected = %s planet = %s, result = %s',
+                test['atm'],
+                test['expected'],
+                str(planet),
+                planet.greenhouse.dict()
+            )
+            if isinstance(test['expected'], tuple):
+                # pragma pylint: disable=E1136
+                self.assertTrue(planet.greenhouse.min() == test['expected'][0])
+                self.assertTrue(planet.greenhouse.max() == test['expected'][1])
+            else:
+                self.assertTrue(planet.greenhouse.min() == test['expected'])
+                self.assertTrue(planet.greenhouse.max() == test['expected'])
+
+    def test_albedo_land_coverage(self):
+        '''
+        Test albedo land coverage
+        desert_coverage = 10% * (10 - hydrographics)
+        Modifiers:
+        - Vacuum/trace atmosphere => desert_coverage = 100%
+        - Very thin atmosphere => desert_coverage +10%
+        - Thin atmosphere => desert_coverage +5%
+        - Dense atmosphere => desert_coverage -5%
+        '''
+        planet = LBB6Planet()
+        for hyd in range(0, 11):
+            for atm in range(0, 10):
+                expected = float((10 - hyd)) * 0.1
+                if atm <= 1:
+                    expected = 1.0
+                if atm >= 2 and atm <= 3:
+                    expected += 0.1
+                if atm >= 4 and atm <= 5:
+                    expected += 0.05
+                if atm >= 8 and atm <= 9:
+                    expected -= 0.05
+                if hyd == 0:
+                    expected = 1.0
+                expected = round(expected, 2)
+                expected = min(1.0, expected)
+                expected = max(0.0, expected)
+                planet.hydrographics = ehex(hyd)
+                planet.atmosphere = ehex(atm)
+                desert_coverage = planet._albedo_determine_desert_coverage()
+                LOGGER.debug(
+                    'uwp %s expected = %s actual = %s',
+                    str(planet), expected, desert_coverage)
+                self.assertTrue(expected == desert_coverage)
+
+    def test_albedo_ice_coverage(self):
+        '''
+        Test albedo_ice_coverage
+        Inner zone => ice_coverage = 0%
+        HZ => ice_coverage == 10%
+        Outer zone => ice_coverage = hydrographics
+        Can't find orbit or star => ice_coverage = 10%
+        '''
+        planet = LBB6Planet()
+        # Inner zone
+        planet.generate(star=Star('G2 V'), orbit=Orbit(1))
+        self.assertTrue(planet._determine_albedo_ice_coverage() == 0.0)
+        # Habitable zone
+        planet.generate(star=Star('G2 V'), orbit=Orbit(3))
+        self.assertTrue(planet._determine_albedo_ice_coverage() == 0.1)
+        # Outer zone
+        planet.generate(star=Star('G2 V'), orbit=Orbit(5))
+        for hyd in range(0, 11):
+            planet.hydrographics = ehex(hyd)
+            self.assertTrue(planet._determine_albedo_ice_coverage() == float(hyd / 10.0))
+
+    def test_temperature_formula(self):
+        '''Test temperature formula'''
+        temp = LBB6Planet._temperature_formula(
+            1.0,    # Luminosity
+            0.3,    # Albedo
+            1.0,    # Distance (AU)
+            1.1     # Greenhouse effect
+        )
+        LOGGER.debug('temp = %s', temp)
+        self.assertTrue(temp == 288)
