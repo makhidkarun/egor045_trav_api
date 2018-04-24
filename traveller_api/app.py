@@ -21,9 +21,11 @@ api.add_route('/misc/angdia', misc.AngDia())
 # Classic Traveller APIs
 api.add_route('/ct/lbb6/star', ct.lbb6.Star())
 api.add_route('/ct/lbb6/orbit', ct.lbb6.Orbit())
-api.add_route('/ct/lbb6/planet', ct.lbb6.Planet())
+'''api.add_route(
+    '/ct/lbb6/star/{code}/orbit/{orbit_no:int}/planet/{uwp}',
+    ct.lbb6.planet.Planet())
 
-'''# MegaTraveller World Builder's Handbook APIs
+# MegaTraveller World Builder's Handbook APIs
 api.add_route('/mt/wbh/star/{code}', mt.wbh.star.Star())
 api.add_route(
     '/mt/wbh/star/{code}/orbit/{orbit_no:int}',
