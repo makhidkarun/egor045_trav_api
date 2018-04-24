@@ -102,13 +102,15 @@ class TestRequestProcessor(unittest.TestCase):
         self.rp.query_parameters = {
             'string': '',
             'number': None,
-            'list': []
+            'list': [],
+            'boolean': True
         }
         query_string = ''
         self.rp.parse_query_string(query_string)
         self.assertTrue(self.rp.query_parameters['string'] == '')
         self.assertTrue(self.rp.query_parameters['number'] is None)
         self.assertTrue(self.rp.query_parameters['list'] == [])
+        self.assertTrue(self.rp.query_parameters['boolean'] is True)
 
         # Repeated list
         query_string = 'list=item1&list=item1'
@@ -120,6 +122,14 @@ class TestRequestProcessor(unittest.TestCase):
         self.assertTrue(
             self.rp.query_parameters['list'] == ['item1']
         )
+
+        # Boolean
+        query_string = 'boolean=false'
+        self.rp.parse_query_string(query_string)
+        self.assertTrue(self.rp.query_parameters['boolean'] is False)
+        query_string = 'boolean=tRuE'
+        self.rp.parse_query_string(query_string)
+        self.assertTrue(self.rp.query_parameters['boolean'] is True)
 
     def test_get_doc(self):
         '''Test get_doc() method'''

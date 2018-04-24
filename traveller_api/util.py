@@ -60,6 +60,8 @@ class RequestProcessor(object):
                     elif isinstance(self.query_parameters[param], bool):
                         if str(value).lower() == 'true':
                             self.query_parameters[param] = True
+                        else:
+                            self.query_parameters[param] = False
                     else:
                         self.query_parameters[param] = value
                 else:
