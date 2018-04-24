@@ -92,3 +92,69 @@ def test_star_api_doc(client):
     assert resp.status == falcon.HTTP_200
     assert resp.json['doc'] == Star.__doc__.replace(
         '<apiserver>', 'http://falconframework.org')
+
+
+def test_orbit_valid_orbit_no(client):
+    '''Test valid orbit_no for Orbit()'''
+    # No star
+    resp = client.simulate_get(
+        '/ct/lbb6/orbit',
+        query_string='orbit_no=4'
+    )
+    expected = {
+        "angular_diameter": None,
+        "au": 1.6,
+        "mkm": 239.3,
+        "notes": [],
+        "orbit_no": 4,
+        "period": None,
+        "star": None
+    }
+    assert resp.json == expected
+    assert resp.status == falcon.HTTP_200
+
+    # Star = F7 V
+    resp = client.simulate_get(
+        '/ct/lbb6/orbit',
+        query_string='orbit_no=4&star=F7V'
+    )
+    expected = {
+        "angular_diameter": 0.416,
+        "au": 1.6,
+        "mkm": 239.3,
+        "notes": [],
+        "orbit_no": 4,
+        "period": 1.848,
+        "star": "F7 V"
+    }
+    assert resp.json == expected
+    assert resp.status == falcon.HTTP_200
+
+
+def test_orbit_invalid_params(client):
+    '''Test orbit with invalid params'''
+    for query in [
+            'orbit_no=whoosh',
+            'orbit_no=whoosh&star=F7V',
+            'orbit_no=whoosh&star=big+shiny+thing',
+            'orbit_no=4&star=big+shiny+thing'
+        ]:
+        resp = client.simulate_get(
+            '/ct/lbb6/orbit',
+            query_string=query
+        )
+        assert resp.status == '400 Invalid parameter'
+
+
+def test_orbit_api_doc(client):
+    '''Test API doc'''
+    resp = client.simulate_get(
+        '/ct/lbb6/orbit',
+        query_string='doc=true')
+
+    assert resp.status == falcon.HTTP_200
+    assert resp.json['doc'] == Orbit.__doc__.replace(
+        '<apiserver>', 'http://falconframework.org')
+
+
+
