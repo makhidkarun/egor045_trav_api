@@ -323,11 +323,19 @@ class LBB6Planet(Planet):
         desert_coverage = self._albedo_determine_desert_coverage()
         veg_coverage = 1.0 - desert_coverage
         ice_coverage = self._determine_albedo_ice_coverage()
-
+        LOGGER.debug(
+            'desert_coverage = %s veg_coverage = %s ice_coverage = %s',
+            desert_coverage, veg_coverage, ice_coverage
+        )
         (
             net_land_coverage,
             net_hydro_coverage
         ) = self._determine_net_land_hydro_coverage(ice_coverage)
+
+        LOGGER.debug(
+            'net_land_coverage = %s net_hydro_coverage = %s',
+            net_land_coverage, net_hydro_coverage
+        )
 
         if self.star is not None and self.orbit is not None:
             if self.orbit.orbit_no > self.star.hz_orbit:
@@ -340,6 +348,8 @@ class LBB6Planet(Planet):
             net_hydro_coverage * 0.02 +
             ice_coverage * 0.85) * (1.0 - self.cloudiness)
 
+        LOGGER.debug('non_cloud_albedo = %s', non_cloud_albedo)
+
         self.albedo = MinMax(
             round(self.cloudiness * 0.4 + non_cloud_albedo, 3),
             round(self.cloudiness * 0.8 + non_cloud_albedo, 3)
@@ -350,8 +360,8 @@ class LBB6Planet(Planet):
         land_coverage = (1-Hyd)-ice/2
         hydro_coverage = Hyd-ice/2
         '''
-        net_land_coverage = float(((10.0 - int(self.hydrographics)) /10.0)) - ice_coverage
-        net_hydro_coverage = float(int(self.hydrographics) / 10.0) - ice_coverage
+        net_land_coverage = float(((10.0 - int(self.hydrographics)) /10.0)) - ice_coverage / 2.0
+        net_hydro_coverage = float(int(self.hydrographics) / 10.0) - ice_coverage / 2.0
         return (net_land_coverage, net_hydro_coverage)
 
     def _determine_albedo_ice_coverage(self):
@@ -373,6 +383,9 @@ class LBB6Planet(Planet):
                 ice_coverage = float(int(self.hydrographics) / 10.0)
         else:
             ice_coverage = 0.1
+        # Desert
+        if int(self.hydrographics) == 0:
+            ice_coverage = 0.0
 
         return ice_coverage
 
@@ -420,20 +433,26 @@ class LBB6Planet(Planet):
             self.greenhouse = MinMax(1.2, 2.2)
 
     def determine_temperature_range(self):
-        '''Determine temperature range'''
+        '''
+        Determine temperature range
+
+        Note: take greenhouse.min()/albedo.max() and
+        greenhouse.max()/albedo.min(); temperature decreases with
+        increasing greenhouse and decreases with increasing albedo
+        '''
         if self.star is not None and self.orbit is not None:
             self.temperature = MinMax(
                 self._temperature_formula(
                     self.star.luminosity,
                     self.albedo.min(),
                     self.orbit.au,
-                    self.greenhouse.min()
+                    self.greenhouse.max()
                 ),
                 self._temperature_formula(
                     self.star.luminosity,
                     self.albedo.max(),
                     self.orbit.au,
-                    self.greenhouse.max()
+                    self.greenhouse.min()
                 )
             )
 
