@@ -19,8 +19,8 @@ api = application = falcon.API(
 api.add_route('/misc/angdia', misc.AngDia())
 
 # Classic Traveller APIs
-'''api.add_route('/ct/lbb6/star/{code}', ct.lbb6.star.Star())
-api.add_route(
+api.add_route('/ct/lbb6/star', ct.lbb6.Star())
+'''api.add_route(
     '/ct/lbb6/star/{code}/orbit/{orbit_no:int}',
     ct.lbb6.orbit.Orbit())
 api.add_route(
