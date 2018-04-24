@@ -16,6 +16,7 @@ sys.path.insert(
 from traveller_api.ct.lbb6.star import Star
 from traveller_api.ct.lbb6.orbit import Orbit
 from traveller_api.ct.lbb6.planet import EhexSize, LBB6Planet
+from traveller_api.util import MinMax
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
@@ -384,7 +385,7 @@ class TestLBB6Planet(unittest.TestCase):
             "star": None,
             "temperature": {"max": 0, "min": 0},
             "temperature_factors": {
-                "albedo": {"max": 0.257, "min": 0.217},
+                "albedo": {"max": 0.266, "min": 0.226},
                 "cloudiness": 0.1,
                 'greenhouse': {"max": 1.0, "min": 1.0}
             },
@@ -403,9 +404,9 @@ class TestLBB6Planet(unittest.TestCase):
             "name": "Planet 9",
             "orbit": "Orbit 3: 1.0 AU, 149.6 Mkm",
             "star": "G2 V",
-            "temperature": {"max": 292.0, "min": 277.0},
+            "temperature": {"max": 289.0, "min": 274.0},
             "temperature_factors": {
-                "albedo": {"max": 0.257, "min": 0.217},
+                "albedo": {"max": 0.266, "min": 0.226},
                 "cloudiness": 0.1,
                 'greenhouse': {"max": 1.0, "min": 1.0}
             },
@@ -439,7 +440,7 @@ class TestLBB6PlanetTemp(unittest.TestCase):
                 'uwp': 'A867977-8',
                 'star': star,
                 'orbit': Orbit(3),
-                'expected': (0.262, 0.462)
+                'expected': (0.265, 0.465)
             }
         ]
         for test in tests:
@@ -506,7 +507,28 @@ class TestLBB6PlanetTemp(unittest.TestCase):
 
     def test_temperature(self):
         '''Temperature tests'''
-        pass
+        star = Star('G2 V')
+        for test in [
+                {'uwp': 'A867A69-F', 'orbit': 3, 'expected': MinMax(221.0, 303.0)},
+                {'uwp': 'F20067C-F', 'orbit': 3, 'expected': MinMax(299.0, 299.0)},
+                {'uwp': 'F43056A-F', 'orbit': 4, 'expected': MinMax(237.0, 237.0)},
+                {'uwp': 'G8B0168-F', 'orbit': 2, 'expected': MinMax(300.0, 707.0)},
+                {'uwp': 'F10046C-F', 'orbit': 9, 'expected': MinMax(48.0, 48.0)}
+            ]:
+            planet = LBB6Planet(uwp=test['uwp'])
+            planet.generate(star=star, orbit=Orbit(test['orbit']))
+            LOGGER.debug('planet = %s', planet.json())
+            LOGGER.debug(
+                'uwp = %s expected = %s, actual = %s',
+                test['uwp'], test['expected'], planet.temperature
+
+            )
+            self.assertAlmostEqual(
+                planet.temperature.min(), test['expected'].min(), delta=2
+            )
+            self.assertAlmostEqual(
+                planet.temperature.max(), test['expected'].max(), delta=2
+            )
 
     def test_greenhouse(self):
         '''Greenhouse tests'''
