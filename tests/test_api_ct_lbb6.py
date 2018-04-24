@@ -83,7 +83,7 @@ def test_star_invalid_code(client):
     assert resp.status == '400 Invalid parameter'
 
 
-def test_api_doc(client):
+def test_star_api_doc(client):
     '''Test API doc'''
     resp = client.simulate_get(
         '/ct/lbb6/star',
