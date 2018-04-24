@@ -238,7 +238,7 @@ def test_planet_valid_params(client):
                     'star': 'K3 V',
                     'temperature': {'max': 209.0, 'min': 197.0},
                     'temperature_factors': {
-                        'albedo': {'max': 0.287, 'min': 0.247},
+                        'albedo': {'max': 0.353, 'min': 0.313},
                         'cloudiness': 0.1,
                         'greenhouse': {'max': 1.0, 'min': 1.0}
                     },
