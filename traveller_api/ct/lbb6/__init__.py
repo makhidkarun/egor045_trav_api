@@ -11,7 +11,7 @@ from traveller_api.ct.lbb6.orbit import Orbit as OrbitData
 API_ENDPOINT = 'http://localhost:8000'
 
 LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(logging.ERROR)
+LOGGER.setLevel(logging.DEBUG)
 
 
 class Star(RequestProcessor):
@@ -122,21 +122,23 @@ class Orbit(RequestProcessor):
             resp.body = self.get_doc_json(req)
             resp.status = falcon.HTTP_200
         else:
-            # Star? If yes, retrieve star data into Star object
+            # Anything to do?
             if self.query_parameters['orbit_no'] is None:
                 raise falcon.HTTPError(
                     title='Invalid orbit',
                     status='400 Invalid parameter',
                     description='No orbit specified')
+
+            # Star? If yes, retrieve star data into Star object
             if self.query_parameters['star'] is not None:
                 try:
                     star = StarData(self.query_parameters['star'])
                 except TypeError as err:
                     raise falcon.HTTPError(
-                    title='Invalid star',
-                    status='400 Invalid parameter',
-                    description='Invalid star {}'.format(
-                        self.query_parameters['star']))
+                        title='Invalid star',
+                        status='400 Invalid parameter',
+                        description='Invalid star {}'.format(
+                            self.query_parameters['star']))
             else:
                 star = None
             try:
@@ -149,10 +151,9 @@ class Orbit(RequestProcessor):
                     title='Invalid orbit',
                     status='400 Invalid parameter',
                     description=str(err))
-            
+
             resp.body = orbit.json()
             resp.status = falcon.HTTP_200
-            
 
 
 class Planet(RequestProcessor):
@@ -194,3 +195,83 @@ class Planet(RequestProcessor):
 
     GET <apiserver>/ct/lbb6/planet?doc=true returns this text
     '''
+    def on_get(self, req, resp):
+        '''GET <apiserver>/ct/lbb6/planet?uwp=<uwp>&<<options>>'''
+        self.query_parameters = {
+            'doc': False,
+            'uwp': None,
+            'orbit_no': None,
+            'star': None,
+            'name': None,
+            'is_mainworld': True
+        }
+        self.parse_query_string(req.query_string)
+        LOGGER.debug('querystring = %s', req.query_string)
+        LOGGER.debug('is_mainworld = %s', self.query_parameters['is_mainworld'])
+
+        if self.query_parameters['doc'] is True:
+            resp.body = self.get_doc_json(req)
+            resp.status = falcon.HTTP_200
+        else:
+            # Anything to do?
+            if self.query_parameters['uwp'] is None:
+                raise falcon.HTTPError(
+                    title='Invalid UWP',
+                    status='400 Invalid parameter',
+                    description='No UWP specified')
+            # Star?
+            if self.query_parameters['star'] is not None:
+                star = self.get_star_details()
+            else:
+                star = None
+            # Orbit?
+            if self.query_parameters['orbit_no'] is not None:
+                orbit = self.get_orbit_details(star)
+            else:
+                orbit = None
+
+            try:
+                planet = LBB6Planet(
+                    uwp=self.query_parameters['uwp'],
+                    name=self.query_parameters['name']
+                )
+                LOGGER.debug(
+                    'query_param is_mainworld = %s',
+                    self.query_parameters['is_mainworld']
+                )
+                planet.generate(
+                    star=star,
+                    orbit=orbit,
+                    is_mainworld=self.query_parameters['is_mainworld']
+                )
+            except ValueError as err:
+                raise falcon.HTTPError(
+                    title='Invalid planet',
+                    status='400 Invalid parameter',
+                    description=str(err))
+
+            resp.body = planet.json()
+            resp.status = falcon.HTTP_200
+
+    def get_star_details(self):
+        '''Get star details'''
+        try:
+            return StarData(self.query_parameters['star'])
+        except TypeError:
+            raise falcon.HTTPError(
+                title='Invalid star',
+                status='400 Invalid parameter',
+                description='Invalid star {}'.format(
+                    self.query_parameters['star']))
+
+    def get_orbit_details(self, star):
+        '''Get orbit details'''
+        try:
+            orbit = OrbitData(self.query_parameters['orbit_no'], star)
+            return orbit
+        except ValueError:
+            raise falcon.HTTPError(
+                title='Invalid orbit',
+                status='400 Invalid parameter',
+                description='Invalid orbit {}'.format(
+                    self.query_parameters['orbit_no']))

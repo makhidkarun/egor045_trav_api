@@ -128,6 +128,7 @@ class LBB6Planet(Planet):
 
     def generate(self, is_mainworld=True, star=None, orbit=None):
         '''Generate, including star/orbit'''
+        LOGGER.debug('is_mainworld = %s', is_mainworld)
         self.is_mainworld = is_mainworld
         self.star = star
         self.orbit = orbit
