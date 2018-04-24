@@ -13,9 +13,9 @@ sys.path.insert(
     0,
     os.path.dirname(os.path.abspath(__file__)) + '/../')
 from traveller_api.app import api
-from traveller_api.ct.lbb6.star import Star as StarData
-from traveller_api.ct.lbb6.orbit import Orbit as OrbitData
-from traveller_api.ct.lbb6.planet import LBB6Planet as PlanetData
+from traveller_api.ct.lbb6 import Star
+from traveller_api.ct.lbb6 import Orbit
+from traveller_api.ct.lbb6 import Planet
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
@@ -81,3 +81,14 @@ def test_star_invalid_code(client):
         query_string='code=shiny+thing+in+the+sky'
     )
     assert resp.status == '400 Invalid parameter'
+
+
+def test_api_doc(client):
+    '''Test API doc'''
+    resp = client.simulate_get(
+        '/ct/lbb6/star',
+        query_string='doc=true')
+
+    assert resp.status == falcon.HTTP_200
+    assert resp.json['doc'] == Star.__doc__.replace(
+        '<apiserver>', 'http://falconframework.org')
