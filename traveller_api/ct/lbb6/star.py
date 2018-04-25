@@ -69,7 +69,7 @@ class Star(object):
             if mtch.group(3) in ['Ia', 'Ib', 'II', 'III', 'IV', 'V', 'VI']:
                 self.size = mtch.group(3)
             else:
-                raise TypeError('Invalid size {}'.format(mtch.group(3)))
+                raise ValueError('Invalid size {}'.format(mtch.group(3)))
             LOGGER.debug(
                 'type = %s decimal = %s size = %s',
                 self.type, self.decimal, self.size)
@@ -93,7 +93,7 @@ class Star(object):
                 if self.type == 'F' and self.decimal <= 4:
                     self.size = 'V'
         else:
-            raise TypeError('Unknown code/type {}'.format(code))
+            raise ValueError('Unknown code/type {}'.format(code))
 
     def _validate_code_dwarf(self, code):
         '''Validate code for dwarf'''
@@ -103,6 +103,8 @@ class Star(object):
             self.type = mtch.group(1)
             self.decimal = ''
             self.size = 'D'
+        else:
+            raise ValueError('Unknown code/type {}'.format(code))
 
     def get_details(self):
         '''Get details from DB'''
@@ -133,7 +135,7 @@ class Star(object):
             self.mass = details.mass
             self.int_orbit = details.int_orbit
         else:
-            raise TypeError(
+            raise ValueError(
                 'Unknown star {}{} {}'.format(
                     self.type,
                     self.decimal,

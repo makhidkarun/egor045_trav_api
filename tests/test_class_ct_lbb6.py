@@ -79,7 +79,7 @@ class TestStar(unittest.TestCase):
 
     def test_create_bogus(self):
         '''Test object create (bogus star types)'''
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ValueError):
             _ = Star('foo')
 
     def test_json(self):
@@ -612,7 +612,7 @@ class TestLBB6PlanetTemp(unittest.TestCase):
         Outer zone => ice_coverage = hydrographics
         Can't find orbit or star => ice_coverage = 10%
         '''
-        planet = LBB6Planet()
+        planet = LBB6Planet(uwp='X644000-0')
         # Inner zone
         planet.generate(star=Star('G2 V'), orbit=Orbit(1))
         self.assertTrue(planet._determine_albedo_ice_coverage() == 0.0)

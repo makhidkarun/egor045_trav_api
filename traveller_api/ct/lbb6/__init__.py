@@ -82,7 +82,7 @@ class Star(RequestProcessor):
         else:
             try:
                 star = StarData(self.query_parameters['code'])
-            except TypeError as err:
+            except ValueError as err:
                 raise falcon.HTTPError(
                     title='Invalid star',
                     status='400 Invalid parameter',
@@ -133,7 +133,7 @@ class Orbit(RequestProcessor):
             if self.query_parameters['star'] is not None:
                 try:
                     star = StarData(self.query_parameters['star'])
-                except TypeError as err:
+                except ValueError as err:
                     raise falcon.HTTPError(
                         title='Invalid star',
                         status='400 Invalid parameter',
@@ -257,7 +257,7 @@ class Planet(RequestProcessor):
         '''Get star details'''
         try:
             return StarData(self.query_parameters['star'])
-        except TypeError:
+        except ValueError:
             raise falcon.HTTPError(
                 title='Invalid star',
                 status='400 Invalid parameter',
