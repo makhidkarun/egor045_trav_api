@@ -271,6 +271,73 @@ class TestLBB6Planet(unittest.TestCase):
         planet.generate(is_mainworld=True)
         self.assertTrue(planet.size == '0')
 
+    def test_load_uwp(self):
+        '''Test create with UWP'''
+        planet = LBB6Planet(uwp='B433432-A')
+        self.assertTrue(str(planet) == 'B433432-A')
+
+        planet = LBB6Planet(uwp='YS00000-0')
+        self.assertTrue(str(planet) == 'YS00000-0')
+
+    @patch('traveller_api.ct.util.Die.roll', side_effect=mock_d6_roll_1)
+    def test_json(self, mock_fn):
+        '''Test JSON representation'''
+        # No orbit or star
+        expected = json.dumps({
+            "is_mainworld": True,
+            "name": "",
+            "orbit": None,
+            "star": None,
+            "temperature": {"max": 0, "min": 0},
+            "temperature_factors": {
+                "albedo": {"max": 0.266, "min": 0.226},
+                "cloudiness": 0.1,
+                'greenhouse': {"max": 1.0, "min": 1.0}
+            },
+            "trade_codes": ["Ni", "Po"],
+            "uwp": "B433432-A"
+        }, sort_keys=True)
+        planet = LBB6Planet(uwp='B433432-A')
+        planet.generate()
+        LOGGER.debug('expected      = %s', expected)
+        LOGGER.debug('planet.json() = %s', planet.json())
+        self.assertTrue(planet.json() == expected)
+
+        # Orbit, star
+        expected = json.dumps({
+            "is_mainworld": True,
+            "name": "Planet 9",
+            "orbit": "Orbit 3: 1.0 AU, 149.6 Mkm",
+            "star": "G2 V",
+            "temperature": {"max": 289.0, "min": 274.0},
+            "temperature_factors": {
+                "albedo": {"max": 0.266, "min": 0.226},
+                "cloudiness": 0.1,
+                'greenhouse': {"max": 1.0, "min": 1.0}
+            },
+            "trade_codes": ["Ni", "Po"],
+            "uwp": "B433432-A"
+        }, sort_keys=True)
+        planet = LBB6Planet('Planet 9', uwp='B433432-A')
+        planet.generate(star=Star('G2 V'), orbit=Orbit(3))
+        LOGGER.debug('expected      = %s', expected)
+        LOGGER.debug('planet.json() = %s', planet.json())
+        self.assertTrue(planet.json() == expected)
+
+    def test_non_hz_orbits(self):
+        '''Test non-HZ orbits (hydrographics)'''
+        star = Star('G2 V')
+        planet = LBB6Planet()
+        planet.generate(star=star, orbit=Orbit(1))
+        self.assertTrue(int(planet.hydrographics) == 0)
+        planet = LBB6Planet()
+        planet.generate(star=star, orbit=Orbit(11))
+        self.assertTrue(str(planet.atmosphere) in '0A')
+
+
+class TestLBB6PlanetTradeCodes(unittest.TestCase):
+    '''Trade code test cases'''
+
     def test_wa(self):
         '''Test Wa trade code'''
         planet = LBB6Planet()
@@ -365,69 +432,6 @@ class TestLBB6Planet(unittest.TestCase):
                 planet._determine_env_trade_codes()
                 LOGGER.debug('planet = %s', str(planet))
                 self.assertFalse('Ic' in planet.trade_codes)
-
-    def test_load_uwp(self):
-        '''Test create with UWP'''
-        planet = LBB6Planet(uwp='B433432-A')
-        self.assertTrue(str(planet) == 'B433432-A')
-
-        planet = LBB6Planet(uwp='YS00000-0')
-        self.assertTrue(str(planet) == 'YS00000-0')
-
-    @patch('traveller_api.ct.util.Die.roll', side_effect=mock_d6_roll_1)
-    def test_json(self, mock_fn):
-        '''Test JSON representation'''
-        # No orbit or star
-        expected = json.dumps({
-            "is_mainworld": True,
-            "name": "",
-            "orbit": None,
-            "star": None,
-            "temperature": {"max": 0, "min": 0},
-            "temperature_factors": {
-                "albedo": {"max": 0.266, "min": 0.226},
-                "cloudiness": 0.1,
-                'greenhouse': {"max": 1.0, "min": 1.0}
-            },
-            "trade_codes": ["Ni", "Po"],
-            "uwp": "B433432-A"
-        }, sort_keys=True)
-        planet = LBB6Planet(uwp='B433432-A')
-        planet.generate()
-        LOGGER.debug('expected      = %s', expected)
-        LOGGER.debug('planet.json() = %s', planet.json())
-        self.assertTrue(planet.json() == expected)
-
-        # Orbit, star
-        expected = json.dumps({
-            "is_mainworld": True,
-            "name": "Planet 9",
-            "orbit": "Orbit 3: 1.0 AU, 149.6 Mkm",
-            "star": "G2 V",
-            "temperature": {"max": 289.0, "min": 274.0},
-            "temperature_factors": {
-                "albedo": {"max": 0.266, "min": 0.226},
-                "cloudiness": 0.1,
-                'greenhouse': {"max": 1.0, "min": 1.0}
-            },
-            "trade_codes": ["Ni", "Po"],
-            "uwp": "B433432-A"
-        }, sort_keys=True)
-        planet = LBB6Planet('Planet 9', uwp='B433432-A')
-        planet.generate(star=Star('G2 V'), orbit=Orbit(3))
-        LOGGER.debug('expected      = %s', expected)
-        LOGGER.debug('planet.json() = %s', planet.json())
-        self.assertTrue(planet.json() == expected)
-
-    def test_non_hz_orbits(self):
-        '''Test non-HZ orbits (hydrographics)'''
-        star = Star('G2 V')
-        planet = LBB6Planet()
-        planet.generate(star=star, orbit=Orbit(1))
-        self.assertTrue(int(planet.hydrographics) == 0)
-        planet = LBB6Planet()
-        planet.generate(star=star, orbit=Orbit(11))
-        self.assertTrue(str(planet.atmosphere) in '0A')
 
 
 class TestLBB6PlanetTemp(unittest.TestCase):
