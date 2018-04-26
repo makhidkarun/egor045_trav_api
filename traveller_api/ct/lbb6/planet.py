@@ -129,6 +129,7 @@ class LBB6Planet(Planet):
     def generate(self, is_mainworld=True, star=None, orbit=None):
         '''Generate, including star/orbit'''
         LOGGER.debug('is_mainworld = %s', is_mainworld)
+        LOGGER.debug('star = %s orbit = %s', star, orbit)
         self.is_mainworld = is_mainworld
         self.star = star
         self.orbit = orbit
@@ -339,8 +340,9 @@ class LBB6Planet(Planet):
         )
 
         if self.star is not None and self.orbit is not None:
-            if self.orbit.orbit_no > self.star.hz_orbit:
-                net_hydro_coverage = 0.0
+            if self.star.hz_orbit is not None:
+                if self.orbit.orbit_no > self.star.hz_orbit:
+                    net_hydro_coverage = 0.0
         non_cloud_albedo = (
             (
                 desert_coverage * 0.2 +
@@ -375,12 +377,36 @@ class LBB6Planet(Planet):
 
         Default (no orbit/star): ice cap = 10%
         '''
+
+        # Determine zone
+        # Outer zone:
+        #   star.hz_orbit == None or orbit.orbit_no > star.hz_orbit
+        # Inner zone:
+        #   orbit.hz_orbit < star.hz_orbit
+        # HZ
+        #   orbit.hz_orbit == star.hz_orbit
         if self.star is not None and self.orbit is not None:
-            if self.orbit.orbit_no < self.star.hz_orbit:
+            LOGGER.debug(
+                'hz_orbit = %s orbit = %s',
+                self.star.hz_orbit, self.orbit.orbit_no
+            )
+            if (
+                    self.star.hz_orbit is None or
+                    self.star.hz_orbit < self.orbit.orbit_no
+                ):
+                zone = 'Outer'
+            else:
+                if self.star.hz_orbit == self.orbit.orbit_no:
+                    zone = 'HZ'
+                elif self.star.hz_orbit > self.orbit.orbit_no:
+                    zone = 'Inner'
+            LOGGER.debug('zone = %s', zone)
+
+            if zone == 'Inner':
                 ice_coverage = 0.0
-            if self.orbit.orbit_no == self.star.hz_orbit:
+            elif zone == 'HZ':
                 ice_coverage = 0.1
-            if self.orbit.orbit_no > self.star.hz_orbit:
+            else:
                 ice_coverage = float(int(self.hydrographics) / 10.0)
         else:
             ice_coverage = 0.1

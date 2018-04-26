@@ -629,6 +629,17 @@ class TestLBB6PlanetTemp(unittest.TestCase):
             planet.hydrographics = ehex(hyd)
             self.assertTrue(planet._determine_albedo_ice_coverage() == float(hyd / 10.0))
 
+    def test_albedo_ice_no_hz(self):
+        '''Ensure star.hz_orbit being None doesn't raise exception'''
+        star = Star('MD')
+        orbit = Orbit(3)
+        planet = LBB6Planet(uwp='X644000-0')
+        planet.generate(star=star, orbit=orbit)
+        self.assertTrue(
+            planet._determine_albedo_ice_coverage() ==
+            float(int(planet.hydrographics) / 10.0)
+        )
+
     def test_temperature_formula(self):
         '''Test temperature formula'''
         temp = LBB6Planet._temperature_formula(
