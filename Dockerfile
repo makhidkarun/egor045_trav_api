@@ -7,7 +7,7 @@ RUN apk update && apk add --no-cache \
 
 # Setup falcon application
 COPY traveller_api /traveller_api
-COPY requirements.txt star.sqlite traveller_rest_api.ini docker/gunicorn.conf docker/logging.conf /
+COPY requirements.txt star.sqlite traveller_api.ini docker/gunicorn.conf docker/logging.conf /
 RUN pip3 install -r /requirements.txt
 
 # Set up Prometheus multiprocess registry

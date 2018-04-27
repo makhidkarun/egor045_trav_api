@@ -33,7 +33,7 @@ class Config(object):
 
     def __init__(self):
         self.config = configparser.ConfigParser()
-        self.config.read('traveller_rest_api.ini')
+        self.config.read('traveller_api.ini')
 
         for section in self.config.sections():
             LOGGER.debug('config section = %s', section)

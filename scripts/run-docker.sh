@@ -6,7 +6,7 @@
 
 ENV="prometheus_multiproc_dir=/metrics"
 PORTS="8000:8000"
-IMAGE="egor045/traveller_rest_api:latest"
+IMAGE="egor045/traveller_api:latest"
 
 POSITIONAL=()
 while [[ $# -gt 0 ]] ; do
