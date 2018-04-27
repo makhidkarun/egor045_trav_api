@@ -28,7 +28,7 @@ def client():
 
 def test_star_valid_code(client):
     '''Test valid code for star API'''
-    for code in ['G2 V', 'G2V']:
+    for code in ['G2 V', 'G2V', 'G2%20V']:
         resp = client.simulate_get(
             '/ct/lbb6/star',
             query_string='code={}'.format(code)

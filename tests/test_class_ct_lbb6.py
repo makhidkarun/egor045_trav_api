@@ -44,8 +44,7 @@ class TestStar(unittest.TestCase):
         tests = {
             'G2 V': 'G2 V',
             'K5VI': 'K5 VI',
-            'MD': 'M D',
-            'G2%20V': 'G2 V'
+            'MD': 'M D'
         }
         for clas in tests:
             star = Star(clas)

@@ -14,6 +14,11 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
 
+def catch_html_space(text):
+    '''Catch HTML space (%20) in text'''
+    return text.replace('%20', ' ')
+
+
 class Star(RequestProcessor):
     '''
     Return world details
@@ -81,6 +86,8 @@ class Star(RequestProcessor):
             resp.status = falcon.HTTP_200
         else:
             try:
+                self.query_parameters['code'] = \
+                    catch_html_space(self.query_parameters['code'])
                 star = StarData(self.query_parameters['code'])
             except ValueError as err:
                 raise falcon.HTTPError(
@@ -132,6 +139,8 @@ class Orbit(RequestProcessor):
             # Star? If yes, retrieve star data into Star object
             if self.query_parameters['star'] is not None:
                 try:
+                    self.query_parameters['star'] = \
+                        catch_html_space(self.query_parameters['star'])
                     star = StarData(self.query_parameters['star'])
                 except ValueError as err:
                     raise falcon.HTTPError(
@@ -225,6 +234,8 @@ class Planet(RequestProcessor):
                     description='No UWP specified')
             # Star?
             if self.query_parameters['star'] is not None:
+                self.query_parameters['star'] = \
+                    catch_html_space(self.query_parameters['star'])
                 star = self.get_star_details()
             else:
                 star = None
