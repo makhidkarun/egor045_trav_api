@@ -115,7 +115,7 @@ class Orbit(object):
                     )
                 )
             # Minimum orbit
-            elif self.orbit_no <= self.star.min_orbit:
+            elif self.orbit_no < self.star.min_orbit:
                 self.notes.append(
                     'Orbit {} is unavailable to {} star; minimum orbit is {}'.format(
                         self.orbit_no, str(self.star), self.star.min_orbit

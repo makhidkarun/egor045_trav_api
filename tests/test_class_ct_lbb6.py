@@ -161,6 +161,10 @@ class TestOrbit(unittest.TestCase):
             'Orbit 2 is unavailable to B5 V star; minimum orbit is 3' in \
             orbit.notes
         )
+        # Edge case: orbit == minimum_orbit
+        orbit = Orbit(0, Star('G2 V'))
+        LOGGER.debug('notes = %s', orbit.notes)
+        self.assertTrue(orbit.notes == [])
 
     def test_str(self):
         '''Test str() representation'''
