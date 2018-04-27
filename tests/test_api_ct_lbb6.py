@@ -167,8 +167,9 @@ def test_planet_valid_params(client):
                     'is_mainworld': False,
                     'name': None,
                     'orbit': None,
+                    'orbital_period': None,
                     'star': None,
-                    'temperature': {'max': 0, 'min': 0},
+                    'temperature': {'max': None, 'min': None},
                     'temperature_factors': {
                         'albedo': {'max': 0.287, 'min': 0.247},
                         'cloudiness': 0.1,
@@ -185,8 +186,9 @@ def test_planet_valid_params(client):
                     'is_mainworld': True,
                     'name': None,
                     'orbit': None,
+                    'orbital_period': None,
                     'star': None,
-                    'temperature': {'max': 0, 'min': 0},
+                    'temperature': {'max': None, 'min': None},
                     'temperature_factors': {
                         'albedo': {'max': 0.287, 'min': 0.247},
                         'cloudiness': 0.1,
@@ -202,8 +204,9 @@ def test_planet_valid_params(client):
                     'is_mainworld': True,
                     'name': 'Barsoom',
                     'orbit': None,
+                    'orbital_period': None,
                     'star': None,
-                    'temperature': {'max': 0, 'min': 0},
+                    'temperature': {'max': None, 'min': None},
                     'temperature_factors': {
                         'albedo': {'max': 0.287, 'min': 0.247},
                         'cloudiness': 0.1,
@@ -219,8 +222,9 @@ def test_planet_valid_params(client):
                     'is_mainworld': True,
                     'name': 'Barsoom',
                     'orbit': 'Orbit 2: 0.7 AU, 104.7 Mkm',
+                    'orbital_period': None,
                     'star': None,
-                    'temperature': {'max': 0, 'min': 0},
+                    'temperature': {'max': None, 'min': None},
                     'temperature_factors': {
                         'albedo': {'max': 0.287, 'min': 0.247},
                         'cloudiness': 0.1,
@@ -235,6 +239,7 @@ def test_planet_valid_params(client):
                     'is_mainworld': True,
                     'name': 'Barsoom',
                     'orbit': 'Orbit 2: 0.7 AU, 104.7 Mkm',
+                    'orbital_period': 0.716,
                     'star': 'K3 V',
                     'temperature': {'max': 209.0, 'min': 197.0},
                     'temperature_factors': {

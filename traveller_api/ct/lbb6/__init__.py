@@ -163,7 +163,7 @@ class Planet(RequestProcessor):
     Options:
     - name=<name>: planet name
     - is_mainworld=<true|false>: plant is mainworld or satellite
-    - orbit=<orbit no>: Planet orbits n orbit <orbit no>
+    - orbit_no=<orbit no>: Planet orbits n orbit <orbit no>
     - star=<code>: Planet orbits a star of type <code>
 
     Returns
@@ -171,6 +171,7 @@ class Planet(RequestProcessor):
         "is_mainworld": <true/false>,
         "name": <name>,
         "orbit": <orbit details>,
+        "orbital_perid": <orbital peroiod>
         "star": <star classification>,
         "temperature": {"max": <max temp>, "min": <min temp>},
         "temperature_factors": {
@@ -184,13 +185,16 @@ class Planet(RequestProcessor):
 
     where
     - <orbit details> is a string listing orbit number and radius
+    - <orbital period> is the planet's orbital period (years)
+      This will be null unless both <star> and <orbit> are specified in the request.
     - <star classification is <type><decimal> <size>
     - <temp> is measured in degrees Kelvin
+      This will be null unless both <star> and <orbit> are specified in the request.
     - <albedo> is the amount of sunlight reflected by the planet
     - <cloudiness> identifies how much of the surface is obscured by clouds
       (range 0.0-1.0)
     - <greenhouse effect> is energy retained due to atmsphere type
-    - <tc> is a starndard Traveller trade classification
+    - <tc> is a standard Traveller trade classification
     - <uwp> is planet's UWP
 
     GET <apiserver>/ct/lbb6/planet?doc=true returns this text
