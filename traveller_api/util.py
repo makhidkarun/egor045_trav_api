@@ -117,17 +117,21 @@ class Ping(RequestProcessor):
 class MinMax(object):
     '''Min-max class'''
 
-    def __init__(self, v_1=0, v_2=0):
-        try:
-            self._min = min(v_1, v_2)
-            self._max = max(v_1, v_2)
-        except TypeError:
-            raise TypeError(
-                '{} ({}), {} ({}) different types'.format(
-                    v_1, type(v_1),
-                    v_2, type
+    def __init__(self, v_1=None, v_2=None):
+        if v_1 is None and v_2 is None:
+            self._min = v_1
+            self._max = v_2
+        else:
+            try:
+                self._min = min(v_1, v_2)
+                self._max = max(v_1, v_2)
+            except TypeError:
+                raise TypeError(
+                    '{} ({}), {} ({}) different types'.format(
+                        v_1, type(v_1),
+                        v_2, type
+                    )
                 )
-            )
 
     def min(self):
         '''Min'''
