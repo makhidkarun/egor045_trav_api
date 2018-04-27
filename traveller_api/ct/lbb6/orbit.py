@@ -1,133 +1,130 @@
 '''orbit.py'''
 
-import os
-import logging
+# pragma pylint: disable=C0103
+
 import json
-from math import atan2, pi
+import logging
+import os
 import requests
-import falcon
-from .db import Schemas
-from ... import DB
-from ... import Config
+from traveller_api import DB
+from traveller_api.ct.lbb6.db import Schemas
+# from ... import Config
 
 LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(logging.DEBUG)
-
-KONFIG = Config()
-config = KONFIG.config['traveller_api.ct.lbb6']
+LOGGER.setLevel(logging.ERROR)
 
 
 class Orbit(object):
     '''Orbit class'''
 
-    def __init__(self):
-        self.clear_data()
-        # Path
+    def __init__(self, orbit_no, star=None):
+        self.orbit_no = None
+        self.au = None
+        self.mkm = None
+        self.period = None
+        self.angular_diameter = None
+        self.star = star
+        self.notes = []
+
         sqlite_file = '{}/{}'.format(
             os.path.dirname(os.path.realpath(__file__)),
-            config.get('dbfile'))
-        self.db = DB(sqlite_file)
-        self.session = self.db.session()
+            'star.sqlite'
+        )
+        self.database = DB(sqlite_file)
+        self.session = self.database.session()
 
-    def on_get(self, req, resp, code, orbit_no):
-        '''GET /ct/lbb6/star/<code>/<star>/orbit/<orbit>'''
-        LOGGER.debug('orbit_no = %s', orbit_no)
-        LOGGER.debug('type(orbit_no) = %s', type(orbit_no))
-        self.clear_data()
-        self.get_star(code)
-        LOGGER.debug('star = %s', self.star)
+        try:
+            orbit_no = int(orbit_no)
+            assert orbit_no in range(0, 20)
+        except:
+            raise ValueError('Invalid orbit_no {}'.format(orbit_no))
+
+        self.get_details(orbit_no)
         if self.star is not None:
-            self.get_radius(orbit_no)
             self.determine_period()
             self.determine_angular_diameter()
-            if self.orbit_no is None:
-                resp.body = json.dumps({
-                    'message': 'Invalid orbit number'
-                })
-                resp.status = falcon.HTTP_400
-            else:
-                doc = {
-                    'angular_dia_deg': self.angular_dia_deg,
-                    'angular_dia_sun': self.angular_dia_sun,
-                    'au': self.au,
-                    'mkm': self.mkm,
-                    'period': self.period
-                }
-                resp.body = json.dumps(doc)
-                resp.status = falcon.HTTP_200
+            self.determine_interior_orbits()
+
+    def get_details(self, orbit_no):
+        '''Get orbital radius (Mkm, AU)'''
+        details = self.session.query(Schemas.OrbitTable).\
+            filter_by(indx=orbit_no).\
+            first()
+        if details:
+            self.orbit_no = orbit_no
+            self.au = details.au
+            self.mkm = details.mkm
         else:
-            resp.body = json.dumps({
-                'message': 'Invalid star classification'
-            })
-            resp.status = falcon.HTTP_400
-
-    def clear_data(self):
-        '''Clear data on new request'''
-        self.star = None
-        self.orbit_no = None
-        self.au = 0
-        self.mkm = 0
-        self.period = 0
-        self.angular_dia_deg = 0
-        self.angular_dia_sun = 0
-
-    def get_star(self, code):
-        '''Get star details'''
-        LOGGER.debug('Querying API endpoint for star type %s', code)
-        resp = requests.get(
-            'http://localhost:8000/ct/lbb6/star/{}'.format(code))
-        LOGGER.debug('Done, response status = %s', resp.status_code)
-        LOGGER.debug('resp.json() = %s', resp.json())
-        if resp.status_code == 200:
-            self.star = resp.json()
+            raise ValueError('Unknown orbit {}'.format(orbit_no))
 
     def determine_period(self):
-        '''Determine orbital period - need orbit radius, stellar mass'''
-        LOGGER.debug('orbit_no = %s', self.orbit_no)
-        if 'mass' in self.star and self.orbit_no is not None:
-            self.period = round((self.au ** 3 / self.star['mass']) ** 0.5, 3)
+        '''Determine orbital period'''
+        if self.star is not None:
+            self.period = round((self.au ** 3 / self.star.mass) ** 0.5, 3)
             LOGGER.debug('period = %s', self.period)
 
     def determine_angular_diameter(self):
-        '''Determine angular diameter of star as seen from this orbit'''
-        # a = 2*arctan(Dstellar / (2 * R))
-        # Convert from solar dia to Mkm (Dsun = 1.3914 Mkm)
-        if 'mass' in self.star and self.orbit_no is not None:
-            stellar_dia = self.star['radius'] * 1.3914
-            LOGGER.debug('stellar dia = %s Mkm', stellar_dia)
-            LOGGER.debug('orbital rad = %s Mkm', self.mkm)
-            self.angular_dia_deg = round(
-                atan2(stellar_dia, self.mkm) * 180 / pi,
-                3)
-            # Sun's angular diameter from earth orbit ~ 0.522 deg
-            self.angular_dia_sun = round(self.angular_dia_deg / 0.522, 3)
-            LOGGER.debug(
-                'angular dia = %s degrees (%sx the sun from earth)',
-                self.angular_dia_deg,
-                self.angular_dia_sun)
+        '''Determine angular diameter'''
+        if self.star is not None:
+            stellar_diameter = self.star.radius * 1.3914
+            req_string = 'http://api.trav.phraction.org/misc/angdia'
+            req_string += '?distance={}&diameter={}'.format(
+                self.mkm,
+                stellar_diameter
+            )
+            try:
+                resp = requests.get(req_string)
+                if resp.status_code == 200:
+                    self.angular_diameter = resp.json()['ang_dia_deg']
+                else:
+                    self.notes.append(
+                        'Call to http://api.trav.phraction.org/misc/angdia' +\
+                        ' returned {}'.format(resp.status_code))
+                    LOGGER.error(
+                        'Call to API endpoint returned %s', resp.status_code)
+            except requests.ConnectionError:
+                LOGGER.debug('Unable to connect to API server')
+                self.notes.append(
+                    'Unable to connect to API endpoint http://api.trav.phraction.org')
 
-    def get_radius(self, orbit_no):
-        '''Get orbit radius from OrbitTable'''
-        if 'mass' in self.star and orbit_no is not None:
-            details = self.session.query(Schemas.OrbitTable).\
-                filter_by(indx=orbit_no).\
-                first()
+    def json(self):
+        '''JSON representation'''
+        doc = {
+            'orbit_no': self.orbit_no,
+            'au': self.au,
+            'mkm': self.mkm,
+            'period': self.period,
+            'angular_diameter': self.angular_diameter,
+            'notes': self.notes
+        }
+        if self.star is None:
+            doc['star'] = self.star
+        else:
+            doc['star'] = str(self.star)
+        return json.dumps(doc, sort_keys=True)
 
-            LOGGER.debug('orbit details = %s', details)
-            if details:
-                self.orbit_no = orbit_no
-                self.au = details.au
-                self.mkm = details.mkm
-                # Tag infeasible orbits
-                LOGGER.debug('type(orbit_no) = %s', type(orbit_no))
-                LOGGER.debug(
-                    'type(star["min_orbit"] = %s',
-                    type(self.star['min_orbit']))
-                if orbit_no <= self.star['min_orbit']:
-                    self.orbit_no = '{0} (orbit too close to star)'.format(
-                        orbit_no)
-                if self.star['int_orbit'] is not None:
-                    LOGGER.debug('Star has potential internal orbits')
-                    if orbit_no <= self.star['int_orbit']:
-                        self.orbit_no = '{0} (orbit within star)'.format(
-                            orbit_no)
+    def determine_interior_orbits(self):
+        '''Determine internal orbits'''
+        if self.star is not None:
+            # Interior orbit
+            if self.star.int_orbit is not None and\
+                    self.orbit_no <= self.star.int_orbit:
+                self.notes.append(
+                    'Orbit {} is within {} star; minimum orbit is {}'.format(
+                        self.orbit_no, str(self.star), self.star.min_orbit
+                    )
+                )
+            # Minimum orbit
+            elif self.orbit_no <= self.star.min_orbit:
+                self.notes.append(
+                    'Orbit {} is unavailable to {} star; minimum orbit is {}'.format(
+                        self.orbit_no, str(self.star), self.star.min_orbit
+                    )
+                )
+
+    def __str__(self):
+        return 'Orbit {:d}: {:.1f} AU, {:.1f} Mkm'.format(
+            self.orbit_no,
+            self.au,
+            self.mkm
+        )

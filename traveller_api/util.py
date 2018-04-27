@@ -112,3 +112,48 @@ class Ping(RequestProcessor):
         }
         resp.body = json.dumps(doc)
         resp.status = falcon.HTTP_200
+
+
+class MinMax(object):
+    '''Min-max class'''
+
+    def __init__(self, v_1=None, v_2=None):
+        if v_1 is None and v_2 is None:
+            self._min = v_1
+            self._max = v_2
+        else:
+            try:
+                self._min = min(v_1, v_2)
+                self._max = max(v_1, v_2)
+            except TypeError:
+                raise TypeError(
+                    '{} ({}), {} ({}) different types'.format(
+                        v_1, type(v_1),
+                        v_2, type
+                    )
+                )
+
+    def min(self):
+        '''Min'''
+        return self._min
+
+    def max(self):
+        '''Max'''
+        return self._max
+
+    def dict(self):
+        '''dict representation'''
+        return {
+            'min': self._min,
+            'max': self._max
+        }
+
+    def json(self):
+        '''JSON representation'''
+        return json.dumps(self.dict(), sort_keys=True)
+
+    def __str__(self):
+        return '<min = {} max = {}>'.format(self._min, self._max)
+
+    def __repr__(self):
+        return str(self)
