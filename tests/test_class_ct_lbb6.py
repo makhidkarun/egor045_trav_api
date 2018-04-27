@@ -287,6 +287,7 @@ class TestLBB6Planet(unittest.TestCase):
             "is_mainworld": True,
             "name": "",
             "orbit": None,
+            "orbital_period": None,
             "star": None,
             "temperature": {"max": None, "min": None},
             "temperature_factors": {
@@ -308,6 +309,7 @@ class TestLBB6Planet(unittest.TestCase):
             "is_mainworld": True,
             "name": "Planet 9",
             "orbit": "Orbit 3: 1.0 AU, 149.6 Mkm",
+            "orbital_period": None,
             "star": "G2 V",
             "temperature": {"max": 289.0, "min": 274.0},
             "temperature_factors": {

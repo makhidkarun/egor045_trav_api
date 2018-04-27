@@ -15,8 +15,10 @@ D6 = Die(6)
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
+
 class EhexSize(ehex):
     '''Extend ehex to account for size S (=0)'''
+
     def __init__(self, value=0):
         self.is_s = False
         super().__init__(value)
@@ -38,7 +40,8 @@ class EhexSize(ehex):
 
     def __eq__(self, other):
         if isinstance(other, str):
-            return self.valid[self._value] == other or (self.is_s and other == 'S')
+            return self.valid[self._value] == other or \
+                (self.is_s and other == 'S')
         elif isinstance(other, int):
             return self._value == other
         elif isinstance(other, ehex):
@@ -49,7 +52,8 @@ class EhexSize(ehex):
 
     def __ne__(self, other):
         if isinstance(other, str):
-            return self.valid[self._value] != other or (self.is_s and other != 'S')
+            return self.valid[self._value] != other or \
+                (self.is_s and other != 'S')
         elif isinstance(other, int):
             return self._value != other
         elif isinstance(other, ehex):
@@ -60,7 +64,8 @@ class EhexSize(ehex):
 
     def __lt__(self, other):
         if isinstance(other, str):
-            return self.valid[self._value] < other or (self.is_s and other < 'S')
+            return self.valid[self._value] < other or \
+                (self.is_s and other < 'S')
         elif isinstance(other, int):
             return self._value < other
         elif isinstance(other, ehex):
@@ -71,7 +76,8 @@ class EhexSize(ehex):
 
     def __gt__(self, other):
         if isinstance(other, str):
-            return self.valid[self._value] > other or (self.is_s and other > 'S')
+            return self.valid[self._value] > other or \
+                (self.is_s and other > 'S')
         elif isinstance(other, int):
             return self._value > other
         elif isinstance(other, ehex):
@@ -82,7 +88,8 @@ class EhexSize(ehex):
 
     def __le__(self, other):
         if isinstance(other, str):
-            return self.valid[self._value] <= other or (self.is_s and other <= 'S')
+            return self.valid[self._value] <= other or \
+                (self.is_s and other <= 'S')
         elif isinstance(other, int):
             return self._value <= other
         elif isinstance(other, ehex):
@@ -93,7 +100,8 @@ class EhexSize(ehex):
 
     def __ge__(self, other):
         if isinstance(other, str):
-            return self.valid[self._value] >= other or (self.is_s and other >= 'S')
+            return self.valid[self._value] >= other or \
+                (self.is_s and other >= 'S')
         elif isinstance(other, int):
             return self._value >= other
         elif isinstance(other, ehex):
@@ -109,7 +117,6 @@ class LBB6Planet(Planet):
     valid_uwp = re.compile(
         r'^([A-GXY])([0-9AS])([0-9A-F])' +
         r'([0-9A])([0-9A])([0-9A-D])([0-9A-Z])\-?([0-9A-Z])$')
-
 
     def __init__(self, name='', uwp=None):
         super().__init__(name=name, uwp=uwp)
@@ -267,6 +274,7 @@ class LBB6Planet(Planet):
             'is_mainworld': self.is_mainworld,
             'star': None,
             'orbit': None,
+            'orbital_period': None,
             'temperature_factors': {
                 'cloudiness': self.cloudiness,
                 'albedo': self.albedo.dict(),
@@ -278,6 +286,7 @@ class LBB6Planet(Planet):
             doc['star'] = str(self.star)
         if self.orbit is not None:
             doc['orbit'] = str(self.orbit)
+            doc['orbital_period'] = self.orbit.period
         return json.dumps(doc, sort_keys=True)
 
     def _determine_env_trade_codes(self):
