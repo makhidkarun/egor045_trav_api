@@ -52,6 +52,8 @@ class Star(object):
         '''Validate code -> type, decimal, size'''
         LOGGER.debug('code = %s', code)
         if code:
+            # Convert HTML %20 (space) to ' '
+            code = code.replace('%20', ' ')
             if code.endswith('D'):
                 self._validate_code_dwarf(code)
             else:
