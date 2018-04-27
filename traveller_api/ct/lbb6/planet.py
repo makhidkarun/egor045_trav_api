@@ -124,7 +124,7 @@ class LBB6Planet(Planet):
         self.cloudiness = None
         self.greenhouse = MinMax(0, 0)
         self.albedo = MinMax(0, 0)
-        self.temperature = MinMax(0, 0)
+        self.temperature = MinMax()
 
     def generate(self, is_mainworld=True, star=None, orbit=None):
         '''Generate, including star/orbit'''

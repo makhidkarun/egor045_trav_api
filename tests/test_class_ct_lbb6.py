@@ -288,7 +288,7 @@ class TestLBB6Planet(unittest.TestCase):
             "name": "",
             "orbit": None,
             "star": None,
-            "temperature": {"max": 0, "min": 0},
+            "temperature": {"max": None, "min": None},
             "temperature_factors": {
                 "albedo": {"max": 0.266, "min": 0.226},
                 "cloudiness": 0.1,
