@@ -4,17 +4,67 @@ import json
 import logging
 from random import randint, seed
 from traveller_api.ct.lbb3.worldgen.planet import System
-from traveller_api.ct.lbb3.encounter.animal import TERRAIN_TYPES_DM
+from traveller_api.ct.lbb3.encounter.tables import TERRAIN_TYPES_DM
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
-EVENTS_CLEAR_TABLE = []
-EVENTS_ROUGH_TABLE = []
+EVENTS_CLEAR_TABLE = [
+    'Chameleon filter. The lead character is surprised at close range by a ' +\
+    'camouflaged filter (100kg, 22/2 cloth+1 6 teeth+1 A0 F0 S0). It has ' +\
+    'surprise and attacks.',
+    'Lengthy storm. A rainstorm with near-zero visibility and 100km/h winds ' +\
+    'occurs. Travel is impossible, either in the air or on the ground. ' +\
+    'Duration 1D days.',
+    'Hallucinogenic spores. Floral pollen breathed without filters cause ' +\
+    'hallucinations (of animal attacks or unreal situations). Duration of ' +\
+    'the hallucinations is 20 - END minutes.',
+    'High "grass". The vegetation here is over 2m tall, making it difficult ' +\
+    'to see more than short range. Roll for an animal encounter, taking ' +\
+    'place at short range.',
+    'Boulder plain. The terrain is flat, but studded by large rocks ' +\
+    '(probably left by glacial action). Straight line travel becomes ' +\
+    'impossible, increasing travel time by 20%.',
+    'Sink hole. A large vertical shaft is encountered, with sheer sides ' +\
+    'and water at the bottom. If encountered by surprise, roll 6+ DEX to ' +\
+    'avoid. Vehicle drivers roll 7+ vehicle skill to avoid.',
+    'Soft ground. The terrain becomes very soft; vehicles dig in and slow ' +\
+    'down. Vehicle speed is reduced by 75%, foot speed by 50%.',
+    'Creekbed. A minor dip reveals a dry creek. Throw 9+ to avoid getting ' +\
+    'a vehicle stuck in a concealed mudhole.',
+    'Light seekers. About 40 large slug-like creatures are attracted to the ' +\
+    'band\'s lights, and crawl slowly towards them. They are poisonous, ' +\
+    'inflicting 2D hits per touch (50kg 10/2 S1)'
+]
+EVENTS_ROUGH_TABLE = [
+    'Broken axle. The band\'s vehicle suffers a broken axle (or similar). ' +\
+    'Repairs will take at least one day, requiring at lease Mechanical-1. ' +\
+    'If the skill is not available, outside help will be required.',
+    'Tar pit. A natural asphalt deposit is encountered. Roll once to ' +\
+    'determine the animal trapped in it, and then twice to determine ' +\
+    'animals near the pit.',
+    'Hot springs. A source of steaming hot water is encountered. At ' +\
+    'irregular intervals the pool turns into a steam geyser. Anyone ' +\
+    'caught in the geyser suffers 4D damage.',
+    'Heavy metal deposits. Characters may make a 12+ roll (DMs INT, EDU)' +\
+    'to notice heavy metal deposits. If exploited, they will be worth ' +\
+    'MCr1 per year. If sold to a mining company, the right will be worth ' +\
+    'Cr 50000.',
+    'No roads. No roads or paths are apparent. Vehicles must detour; ' +\
+    'Pedestrians may continue at 25% speed.',
+    'Violent rainstorm. A sudden storm reduces visibility to medium range ' +\
+    'or less. Roll 8+ on relevant vehicle skill to avoid an accident.',
+    'Ravines and precipices. See LBB3 p 31.',
+    'Trapper web. The lead character encounters a large adhesive web ' +\
+    'without the trapper present. The trapper will return in 4 rounds ' +\
+    '(Trapper 100kg 10/5 mesh 6 horns A9 F9 S2).',
+    'Rocky ground. The terrain becomes extremely rocky. Throw 9+ to avoid ' +\
+    'becoming stuck, and reduce speed by 50%.'
+]
 EVENTS_MOUNTAIN_TABLE = []
 EVENTS_FOREST_TABLE = []
 EVENTS_RIVER_TABLE = [
-    'Bad water. The water is contaminated with heavy metal concentrations' +\
+    'Bad water. The water is contaminated with heavy metal concentrations ' +\
         'Bathing in, or drinking, the water will cause illness fof 1D ' +\
         'days. Roll END 8+ to avoid',
     'Poison pouncer. A character is bitten by a poisonous creature. The ' +\
@@ -142,7 +192,7 @@ class Event(object):
     def _random_list_item(self, _list):
         '''Return random item from list'''
         try:
-            return _list[0, randint(0, len(_list) - 1)]
+            return _list[randint(0, len(_list) - 1)]
         except ValueError:
             if self._strict:
                 raise ValueError('Insufficient data in table')
@@ -169,4 +219,4 @@ class Event(object):
 
     def json(self):
         '''JSON representation'''
-        return json.dumps(self.dict())
+        return json.dumps(self.dict(), sort_keys=True)

@@ -2,6 +2,7 @@
 
 # pragma pylint: disable=C0413, W0613, C0301
 
+import json
 import logging
 import os
 import sys
@@ -10,7 +11,13 @@ from mock import patch
 sys.path.insert(
     0,
     os.path.dirname(os.path.abspath(__file__)) + '/../')
-from traveller_api.ct.lbb3.encounter.animal import Hits, Herbivore
+from traveller_api.ct.lbb3.encounter.tables import TERRAIN_TYPES_DM
+from traveller_api.ct.lbb3.encounter.animal import Hits
+from traveller_api.ct.lbb3.encounter.animal import Herbivore
+from traveller_api.ct.lbb3.encounter.animal import Carnivore
+from traveller_api.ct.lbb3.encounter.animal import Omnivore
+from traveller_api.ct.lbb3.encounter.animal import Scavenger
+from traveller_api.ct.lbb3.encounter.event import Event
 from traveller_api.ct.lbb3.encounter.encounter_table import EncounterTable6
 
 LOGGER = logging.getLogger(__name__)
@@ -35,6 +42,11 @@ def mock_d6_roll_6(dice=1, modifier=0, floor=0, ceiling=9999):
     return result
 
 
+def mock_randint(lower, upper):
+    '''Mock randint'''
+    return upper
+
+
 class TestHits(unittest.TestCase):
     '''Hits unit tests'''
 
@@ -49,11 +61,28 @@ class TestHits(unittest.TestCase):
 
 
 class TestAnimal(unittest.TestCase):
-    '''Animal unit tests'''
+    '''Test quick animal creates'''
 
-    def test_size_plus_6(self):
-        '''Test size +6 entry'''
-        pass
+    def test_animal_basic(self):
+        '''Test quick animal creates by terrain type'''
+        for terrain in TERRAIN_TYPES_DM:
+            for supertype in [Herbivore, Carnivore, Omnivore, Scavenger]:
+                LOGGER.debug('terrain = %s, supertype = %s', terrain, supertype)
+                _ = supertype(terrain)
+
+    def test_animal_uwp(self):
+        '''Test animal create with terrain type and uwp'''
+        uwp = 'A788989-A'
+        for terrain in TERRAIN_TYPES_DM:
+            for supertype in [Herbivore, Carnivore, Omnivore, Scavenger]:
+                LOGGER.debug('terrain = %s, supertype = %s', terrain, supertype)
+                _ = supertype(terrain, uwp=uwp)
+
+    def test_create_bogus_uwp(self):
+        '''Test for ValueError with bad UWP'''
+        uwp = 'Not a UWP, really'
+        with self.assertRaises(ValueError):
+            _ = Carnivore('Clear', uwp)
 
 
 class TestHerbivore(unittest.TestCase):
@@ -64,7 +93,13 @@ class TestHerbivore(unittest.TestCase):
         '''Test create for Animal'''
         herbvivore = Herbivore('Clear')
         LOGGER.debug('Animal = %s', str(herbvivore))
-        self.assertTrue(str(herbvivore) == '6 Grazers 50 kg 9/6 none 6 hooves and teeth F3 A5 S2')
+        self.assertTrue(str(herbvivore) == '6 Grazers 50 kg 12/6 none 6 hooves and teeth F3 A5 S2')
+
+    def test_create_invalid_terrain(self):
+        '''Test create with invalid terrain type'''
+        with self.assertRaises(ValueError):
+            _ = Herbivore('map is not the terrain')
+
 
 class TestEncounterTable6(unittest.TestCase):
     '''6-row encounter table tests'''
@@ -76,15 +111,63 @@ class TestEncounterTable6(unittest.TestCase):
         expected = '\n'.join([
             'Clear Terrain ',
             'Die Animal Type                  Weight Hits  Armor     Wounds & Weapons',
-            '  1  1 Hijacker                   50 kg 9/6   none       6 thrasher            A4 F5 S1',
-            '  2  6 Grazers                    50 kg 9/6   none       6 hooves and teeth    F3 A5 S2',
-            '  3  6 Grazers                    50 kg 9/6   none       6 hooves and teeth    F3 A5 S2',
-            '  4  6 Grazers                    50 kg 9/6   none       6 hooves and teeth    F3 A5 S2',
-            '  5  1 Gatherer                   50 kg 9/6   none       3 claws               A6 F5 S1',
-            '  6  1 Chaser                     50 kg 9/6   none       9 stinger             A0 F6 S1'
+            '  1  1 Hijacker                   50 kg 12/6  none       6 thrasher            A4 F5 S1',
+            '  2  6 Grazers                    50 kg 12/6  none       6 hooves and teeth    F3 A5 S2',
+            '  3  6 Grazers                    50 kg 12/6  none       6 hooves and teeth    F3 A5 S2',
+            '  4  6 Grazers                    50 kg 12/6  none       6 hooves and teeth    F3 A5 S2',
+            '  5  1 Gatherer                   50 kg 12/6  none       3 claws               A6 F5 S1',
+            '  6  1 Chaser                     50 kg 12/6  none       9 stinger             A0 F6 S1'
         ])
 
         table = EncounterTable6('Clear')
         LOGGER.debug('expected = "%s"', expected)
         LOGGER.debug('received = "%s"', str(table))
         self.assertTrue(str(table) == expected)
+
+
+class TestEvent(unittest.TestCase):
+    '''Event() unit tests'''
+
+    def test_create(self):
+        '''Basic create test'''
+        for terrain in TERRAIN_TYPES_DM:
+            LOGGER.debug('terrain = %s', terrain)
+            _ = Event(terrain, strict=False)
+
+        # Create with UWP
+        uwp = 'A544765-9'
+        for terrain in TERRAIN_TYPES_DM:
+            LOGGER.debug('terrain = %s', terrain)
+            _ = Event(terrain, uwp=uwp, strict=False)
+
+        # Test for ValueError on bogus terrain
+        with self.assertRaises(ValueError):
+            _ = Event('candyfloss')
+
+        # Test for ValueError on bogus UWP
+        with self.assertRaises(ValueError):
+            _ = Event('Clear', uwp='flatworld')
+
+    @patch('traveller_api.ct.lbb3.encounter.event.randint', side_effect=mock_randint)
+    def test_representations(self, mock_fn):
+        '''Test representations - str(), dict(), json()'''
+        expected = 'Light seekers. About 40 large slug-like creatures ' +\
+        'are attracted to the band\'s lights, and crawl slowly towards ' +\
+        'them. They are poisonous, inflicting 2D hits per touch (50kg 10/2 S1)'
+        expected_dict = {
+            'terrain': 'Clear',
+            'quantity': None,
+            'type': expected,
+            'weight': None,
+            'hits': None,
+            'wounds': None,
+            'weapons': None,
+            'armor': None,
+            'behaviour': None
+        }
+        event = Event('Clear')
+        LOGGER.debug('event = %s', str(event))
+
+        self.assertTrue(str(event) == expected)
+        self.assertTrue(event.dict() == expected_dict)
+        self.assertTrue(event.json() == json.dumps(expected_dict, sort_keys=True))

@@ -8,7 +8,7 @@ from traveller_api.ct.lbb3.encounter.animal import Herbivore
 from traveller_api.ct.lbb3.encounter.animal import Omnivore
 from traveller_api.ct.lbb3.encounter.animal import Scavenger
 from traveller_api.ct.lbb3.encounter.event import Event
-from traveller_api.ct.lbb3.encounter.animal import TERRAIN_TYPES_DM
+from traveller_api.ct.lbb3.encounter.tables import TERRAIN_TYPES_DM
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.ERROR)
