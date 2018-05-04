@@ -18,7 +18,7 @@ from traveller_api.ct.lbb3.encounter.animal import Carnivore
 from traveller_api.ct.lbb3.encounter.animal import Omnivore
 from traveller_api.ct.lbb3.encounter.animal import Scavenger
 from traveller_api.ct.lbb3.encounter.event import Event
-from traveller_api.ct.lbb3.encounter.encounter_table import EncounterTable6
+from traveller_api.ct.lbb3.encounter.encounter_table import EncounterTable1D
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
@@ -101,12 +101,12 @@ class TestHerbivore(unittest.TestCase):
             _ = Herbivore('map is not the terrain')
 
 
-class TestEncounterTable6(unittest.TestCase):
+class TestEncounterTable1D(unittest.TestCase):
     '''6-row encounter table tests'''
 
     @patch('traveller_api.ct.util.Die.roll', side_effect=mock_d6_roll_3)
     def test_create(self, mock_fn):
-        '''Test create for EncounterTable6'''
+        '''Test create for EncounterTable1D'''
 
         expected = '\n'.join([
             'Clear Terrain ',
@@ -119,7 +119,7 @@ class TestEncounterTable6(unittest.TestCase):
             '  6  1 Chaser                     50 kg 12/6  none       9 stinger             A0 F6 S1'
         ])
 
-        table = EncounterTable6('Clear')
+        table = EncounterTable1D('Clear')
         LOGGER.debug('expected = "%s"', expected)
         LOGGER.debug('received = "%s"', str(table))
         self.assertTrue(str(table) == expected)

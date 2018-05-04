@@ -53,3 +53,6 @@ api.add_route('/error_handler/{strng}', error_handler.Foo())
 
 # Ping endpoint
 api.add_route('/ping', util.Ping())
+
+# CT LBB3 encounter table
+api.add_route('/ct/lbb3/encounter', ct.lbb3.encounter.EncounterTable())

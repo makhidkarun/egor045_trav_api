@@ -77,12 +77,14 @@ class EncounterTableBase(object):
     def dict(self):
         '''dict() representation'''
         doc = {
-            'uwp': str(self.planet),
+            'uwp': None,
             'terrain': str(self.terrain),
             'rows': {}
         }
         for _ in self.rows:
-            doc['rows'][_] = self.rows[_]
+            doc['rows'][_] = self.rows[_].dict()
+        if self.planet is not None:
+            doc['uwp'] = str(self.planet)
         return doc
 
     def json(self):
@@ -90,7 +92,7 @@ class EncounterTableBase(object):
         return json.dumps(self.dict(), sort_keys=True)
 
 
-class EncounterTable6(EncounterTableBase):
+class EncounterTable1D(EncounterTableBase):
     '''D6 encounter table'''
 
     def __init__(self, terrain, uwp=None):
@@ -116,3 +118,30 @@ class EncounterTable6(EncounterTableBase):
         self.rows['4'] = Herbivore(self.terrain, uwp)
         self.rows['5'] = Omnivore(self.terrain, uwp)
         self.rows['6'] = Carnivore(self.terrain, uwp)
+
+
+class EncounterTable2D(EncounterTableBase):
+    '''2D6 encounter table'''
+
+    def __init__(self, terrain, uwp=None):
+        super().__init__(terrain)
+        self.__size = 6
+        self.generate()
+
+    def generate(self):
+        '''Add 11 rows'''
+        if self.planet is None:
+            uwp = None
+        else:
+            uwp = str(self.planet)
+        self.rows['2'] = Scavenger(self.terrain, uwp)
+        self.rows['3'] = Omnivore(self.terrain, uwp)
+        self.rows['4'] = Scavenger(self.terrain, uwp)
+        self.rows['5'] = Omnivore(self.terrain, uwp)
+        self.rows['6'] = Herbivore(self.terrain, uwp)
+        self.rows['7'] = Herbivore(self.terrain, uwp)
+        self.rows['8'] = Herbivore(self.terrain, uwp)
+        self.rows['9'] = Carnivore(self.terrain, uwp)
+        self.rows['10'] = Event(self.terrain, uwp, strict=False)
+        self.rows['11'] = Carnivore(self.terrain, uwp)
+        self.rows['12'] = Carnivore(self.terrain, uwp)
