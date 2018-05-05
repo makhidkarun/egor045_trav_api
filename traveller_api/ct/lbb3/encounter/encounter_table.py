@@ -2,6 +2,7 @@
 
 import json
 import logging
+from textwrap import wrap
 from traveller_api.ct.lbb3.worldgen.planet import System
 from traveller_api.ct.lbb3.encounter.animal import Carnivore
 from traveller_api.ct.lbb3.encounter.animal import Herbivore
@@ -53,7 +54,10 @@ class EncounterTableBase(object):
         for _ in self.rows:
             if isinstance(self.rows[_], Event):
                 doc.append(
-                    ' {:2d} {}'.format(_, self.rows[_])
+                    ' {:2d} {}'.format(
+                        int(_),
+                        '\n    '.join(wrap(str(self.rows[_]), width=84))
+                    )
                 )
             else:
                 LOGGER.debug('quantity = %s', self.rows[_].quantity)
@@ -96,7 +100,7 @@ class EncounterTable1D(EncounterTableBase):
     '''D6 encounter table'''
 
     def __init__(self, terrain, uwp=None):
-        super().__init__(terrain)
+        super().__init__(terrain, uwp)
         self.__size = 6
         self.generate()
 
@@ -124,7 +128,7 @@ class EncounterTable2D(EncounterTableBase):
     '''2D6 encounter table'''
 
     def __init__(self, terrain, uwp=None):
-        super().__init__(terrain)
+        super().__init__(terrain, uwp)
         self.__size = 6
         self.generate()
 

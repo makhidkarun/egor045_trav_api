@@ -12,7 +12,7 @@ from traveller_api.ct.lbb3.encounter.tables import SUPERTYPE_DM_TABLE
 from traveller_api.ct.lbb3.encounter.tables import WEAPONS_TABLE
 
 LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(logging.DEBUG)
+LOGGER.setLevel(logging.ERROR)
 
 D6 = Die(6)
 
