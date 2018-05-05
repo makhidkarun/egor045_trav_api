@@ -20,3 +20,4 @@ venv*
 *.code-workspace
 htmlcov
 .coverage
+api_version.py

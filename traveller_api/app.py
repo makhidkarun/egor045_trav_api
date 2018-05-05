@@ -9,6 +9,7 @@ import traveller_api.t5.orbit as t5_orbit
 import traveller_api.util as util
 import traveller_api.error_handler as error_handler
 import traveller_api.middleware as middleware
+import traveller_api.api_version as api_version
 
 api = application = falcon.API(
     middleware=middleware.PrometheusMetrics()
@@ -56,3 +57,6 @@ api.add_route('/ping', util.Ping())
 
 # CT LBB3 encounter table
 api.add_route('/ct/lbb3/encounter', ct.lbb3.encounter.EncounterTable())
+
+# api_version
+api.add_route('/api_version', api_version.APIVersion())
