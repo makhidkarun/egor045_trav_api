@@ -97,6 +97,7 @@ class EncounterTable(RequestProcessor):
             'size': 2
         }
         self.parse_query_string(req.query_string)
+        LOGGER.debug('size = %s', self.query_parameters['size'])
 
         if self.query_parameters['doc'] is True:
             resp.body = self.get_doc_json(req)
@@ -108,7 +109,7 @@ class EncounterTable(RequestProcessor):
             resp.status = falcon.HTTP_200
         else:
             try:
-                if self.query_parameters['size'] == 1:
+                if int(self.query_parameters['size']) == 1:
                     table = EncounterTable1D(
                         terrain=self.query_parameters['terrain'],
                         uwp=self.query_parameters['uwp']
