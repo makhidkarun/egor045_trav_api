@@ -1,0 +1,34 @@
+'''api_version.py'''
+
+# pragma pylint: disable=W0613
+
+import json
+import falcon
+from traveller_api.util import RequestProcessor
+
+class APIVersion(RequestProcessor):
+    '''
+    GET /api_version
+
+    Returns
+    {
+        'api_version': <latest commit ID>
+    }
+    '''
+
+    def on_get(self, req, resp):
+        '''GET /api_version'''
+        self.query_parameters = {
+            'doc': False,
+        }
+        self.parse_query_string(req.query_string)
+
+        if self.query_parameters['doc'] is True:
+            resp.body = self.get_doc_json(req)
+            resp.status = falcon.HTTP_200
+        else:
+            doc = {
+                'api_version': 'GIT_LATEST_COMMIT'
+            }
+            resp.body = json.dumps(doc)
+            resp.status = falcon.HTTP_200
