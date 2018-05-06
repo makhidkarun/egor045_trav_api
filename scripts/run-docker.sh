@@ -7,6 +7,7 @@
 ENV="prometheus_multiproc_dir=/metrics"
 PORTS="8000:8000"
 IMAGE="egor045/traveller_api:latest"
+NAME="api_dev"
 
 POSITIONAL=()
 while [[ $# -gt 0 ]] ; do
@@ -21,6 +22,11 @@ while [[ $# -gt 0 ]] ; do
             shift
             shift
             ;;
+	-n|--name)
+	    NAME="$2"
+	    shift
+	    shift
+	    ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
             shift # past argument
@@ -35,4 +41,4 @@ fi
 set -- "${POSITIONAL[@]}"
 echo Running docker image $IMAGE with env=$ENV, port=$PORTS
 
-/usr/bin/docker run --rm -p $PORTS -e $ENV $IMAGE
+/usr/bin/docker run --rm --name $NAME -p $PORTS -e $ENV $IMAGE
