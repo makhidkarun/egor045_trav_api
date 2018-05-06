@@ -83,10 +83,12 @@ class EncounterTableBase(object):
         doc = {
             'uwp': None,
             'terrain': str(self.terrain),
-            'rows': {}
+            'rows': []
         }
         for _ in self.rows:
-            doc['rows'][_] = self.rows[_].dict()
+            doc['rows'].append(
+                (_, self.rows[_].dict())
+            )
         if self.planet is not None:
             doc['uwp'] = str(self.planet)
         return doc

@@ -38,13 +38,13 @@ def test_encounter_table(client):
         assert resp.json['terrain'] == terrain
         assert len(resp.json['rows']) == 11
         LOGGER.debug('resp.json = %s', resp.json['rows'])
-        for row_id in resp.json['rows']:
-            LOGGER.debug('row = %s', row_id)
+        for row in resp.json['rows']:
+            LOGGER.debug('row = %s', row)
             for field in [
                     'terrain', 'quantity', 'weight', 'hits', 'wounds',
                     'armor', 'behaviour'
                 ]:
-                assert field in resp.json['rows'][row_id]
+                assert field in row[1]
 
 def test_create_uwp(client):
     '''Test create with UWP supplied'''
