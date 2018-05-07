@@ -61,8 +61,73 @@ EVENTS_ROUGH_TABLE = [
     'Rocky ground. The terrain becomes extremely rocky. Throw 9+ to avoid ' +\
     'becoming stuck, and reduce speed by 50%.'
 ]
-EVENTS_MOUNTAIN_TABLE = []
-EVENTS_FOREST_TABLE = []
+EVENTS_MOUNTAIN_TABLE = [
+    'Narrow trail. The road or path ahead narrows to about 1 metre ' +\
+        'in width and appears to remain so for the next few ' +\
+        'kilometres. The trail is impassable to vehicles.',
+    'Electrical storm. Heavy winds and lightning force the party to ' +\
+        'halt for 12 hours. Unless a refuge is available (throw 7+ ' +\
+        'for a cave, cabin, etc), a lightning hit on electrical ' +\
+        'equipment (throw 9+) will incapacitate it.',
+    'Sun-influenced crystal structures. At about midday, light from ' +\
+        'the sun strikes a crystalline outcrop and randomly flashes ' +\
+        'energy about. Each character must make an 8+ DEX roll to ' +\
+        'avoid being hit. Damage is as laser carbine, and reflec ' +\
+        'protects.',
+    'Avalanche. Throw 8+ for a loud noise (vehicle, conversaton, etc) ' +\
+        'to precipitate an avalanche. Make an 8+ DEX roll to avoid ' +\
+        '3D injury. Throw tonnage of vehicle or less to avoid ' +\
+        'destruction of vehicle.',
+    'Freezing weather. Temperatures go to below zero. Individuals not ' +\
+        'expressly dressed for for such cold throw endurance or less ' +\
+        'each hour to avoid suffering 2 points of damage. Continue ' +\
+        'until shelter is reached.',
+    'Natural bridge. A large crevasse blocks progress, and is spanned ' +\
+        'by a large natural arch. Throw vehicle tonnage or greater to ' +\
+        'successfully cross.',
+    'Falling rocks. Rocks have been dislodged overhead and begin ' +\
+        'falling. 2D rocks fall, each throwing 10+ to hit a vehicle ' +\
+        'or individual (inflicting 2D hts).',
+    'Cave. A deep mountain cave is encountered, with a shallow stream ' +\
+        'and two wide banks exiting. Concealed behind a large rock ' +\
+        'is an interior extension leading deeper into the mountain.',
+    'Crevasse. A deep crevasse (100m across) is encountered, ' +\
+        'blockng further progress.'
+]
+EVENTS_FOREST_TABLE = [
+    'Poison pouncer. This carnivore lies in wait for worthy prey, and ' +\
+        'attacks with surprise at close or short range. Its first bite ' +\
+        'does double damage. (50kg 10/10 jack 11 teeth+1 A0 F9 S3)',
+    'Webs. If the event achieves surprise, the lead character or vehicle ' +\
+        'is trapped in a large web strung between trees.',
+    'Venemous arthropods. While stopped, several poisonous creatures ' +\
+        'insert themselves in likely places (boots, packs, etc) and ' +\
+        'attack when a character then encounters them. Make a 6+ DEX ' +\
+        'roll to avoid being bitten for 3D damage.',
+    'Soft ground. This area will not support gound vehicles, forcing a ' +\
+        'detour and delay of at least one day. Individuals on foot can ' +\
+        'proceed at half speed.',
+    'Forest fire. The forest is burning, with the flame front heading for ' +\
+        'the adventurers. All animals in the table run blindly towards the ' +\
+        'group. Each animal will attack if blocked.',
+    'Dense underbrush. Continued passage through this portion of the ' +\
+        'forest is obstructed by very dense undergrowth. it can be cut ' +\
+        'through with ' +\
+        'cutlasses or blades at one-quarter speed. Vehicles cannot force ' +\
+        'their way through.',
+    'Tanglewood. The entire floor of the forest is covered with a low ' +\
+        'network of sticky flexible roots. Running is impossible, ' +\
+        'walking is difficult. Reduce speed to one quarter.',
+    'Jungle drums. Distant drums are heard in a varying rhythm. If they ' +\
+        'are sought out, they are determined to be caused by a natural ' +\
+        'phenomenon produced by a large grove of hollow trees.',
+    'Monsoon. A storm begins with steady rain and gentle winds, ' +\
+        'increasing to violent wind and heavy rain on the second day. ' +\
+        'It reduces visibility completely and forces a halt. It ends ' +\
+        'after three days.',
+    'Giant camouflaged filter. The travellers are surprised by a giant ' +\
+        'filter at close range (16000kg 90/20 mesh 19 teeth A0 F0 S0)'
+]
 EVENTS_RIVER_TABLE = [
     'Bad water. The water is contaminated with heavy metal concentrations ' +\
         'Bathing in, or drinking, the water will cause illness fof 1D ' +\
@@ -85,13 +150,88 @@ EVENTS_RIVER_TABLE = [
         'land vehicles being overturned. Individuals roll DEX 10+ to avoid ' +\
         '3D injury'
 ]
-EVENTS_SWAMP_TABLE = []
-EVENTS_DESERT_TABLE = []
-EVENTS_BEACH_TABLE = []
-EVENTS_OCEAN_SURFACE_TABLE = []
-EVENTS_OCEAN_DEEPS_TABLE = []
-EVENTS_RUINS_TABLE = []
-EVENTS_CAVE_TABLE = []
+EVENTS_SWAMP_TABLE = [
+    'Path ends. The swamp has turned to bayou and no further progress ' +\
+        'is possible by land. Further movement must be by water, either ' +\
+        'swimming or by boat or raft. Water depth averages 3m.',
+    'Marsh gas. Gas released from the swamp glows in the dark, and may ' +\
+        'give the appaearance of a ship landing nearby, or of camp fires ' +\
+        'in the distance. It is nearly impossible to find the source of ' +\
+        'the gas. Marsh gas is inflammable.',
+    'Dense fog. Mist and fog obscure vision, reducing visibility to ' +\
+        'medium range or less. Progress is reduced to half normal ' +\
+        'speed.',
+    'Quicksand. Shallow water conceals a patch of quicksand. Anyone ' +\
+        'trapped in it mus roll 15+ per combat round to be pulled under. ' +\
+        'DMs: -1 per round trapped, +1 per companion assisting. Escape ' +\
+        'after 2D combat rounds.',
+    'Noxious gases. The area is filled with foul-smelling fumes, as if ' +\
+        'from rotting carrion. Investigation will reveal a patch of ' +\
+        'poison water and ground. Tests will reveal a high level of ' +\
+        'mercury contamination.',
+    'Bog. The soil in the swamp is moist and soft. Ordinary wheeled ' +\
+        'vehicles are completely stopped; ATVs are reduced to very ' +\
+        'slow speed. Individuals are reduced to one-quarter speed.',
+]
+EVENTS_DESERT_TABLE = [
+    'Oasis. A small water-hole is encountered. Throw 10+ for it to be ' +\
+        'a mirage when approached. If it is real, throw 9+ for the water ' +\
+        'to be poisonous, with appropriate clues.',
+    'Drum sand. This terrain feature echoes footsteps and vehicle' +\
+        ' noise to attract local predators, especially this: (64000kg ' +\
+        '85/30 battle 20 thrasher A3 F9 S2)',
+    'Very broken and rough ground. Impassable to vehicles of any type, and ' +\
+        'passable to those on foot only at one quarte speed.',
+    'Mirage. An oasis appears on the horizon, but dissolves into nothing ' +\
+        'as it is approached. This continues until nightfall.',
+    'Trapper. A conical pit dug in sand has a brittle rim. Anyone standing ' +\
+        'on the rim will tumple in. The walls are loose sand, and prevent ' +\
+        'escape without help or lots of time. There is no trapper ' +\
+        'present.',
+    'Violent sandstorm. Extreme winds whip abrasive sand particles at ' +\
+        'grinding force. Progress is impossible for at least a day. ' +\
+        'Individuals will be buried, and vehicle windscreens abraded ' +\
+        'to translucency.',
+    'Sand sea. This area is composed of soft sand and dunes. Walking is ' +\
+        'at one quarter speed. Vehicle speed is reduced to 20 km/h.',
+    'Oasis. Vegetation is clustered around a pool of fresh water. Roll ' +\
+        'for an animal encounter.'
+]
+EVENTS_BEACH_TABLE = [
+    'Poison Intermittent. A small animal with a shiny metallic shell ' +\
+        'is noticed on the beach. Any wound it inflicts will not heal ' +\
+        'for at least 90 days.',
+    'Undertow. Individuals in the water will find themselves being ' +\
+        'dragged out to sea at S1.',
+    'Beached animal. A huge sea creature has been washed up on the beach. ' +\
+        'Roll twice on the table to select scavengers and carnivores ' +\
+        'eating the carcass.'
+]
+EVENTS_OCEAN_SURFACE_TABLE = [
+    'Storm. Heavy seas and violent winds toss any vehicle present. ' +\
+        'Make am 8+ vehicle skill check to avoid a small vehicle ' +\
+        'being overturned, or a large vehicle being damaged.',
+    'Floating carcass. A large sea creature has died and is floating ' +\
+        'at or near the surface. Roll twice for carnivores and ' +\
+        'scavengers preying on the body.'
+]
+EVENTS_OCEAN_DEEPS_TABLE = [
+    'Giant hunter. A very large sea creature attacks any vehicle it ' +\
+        'encounters. (24000kg 58/16 battle 18 thrasher A0 F0 S2)',
+    'Thermocline. A termperature inversion affects the vehicle\'s sensors. ' +\
+        'Roll for an animal encounter at short range.',
+    'Thermal vent. A uprush of hot water from a volcanic vent is ' +\
+        'encountered. Make an 6+ vehicle skill roll to avoid losing control.',
+    'Deep sea carcass. A large sea creature has died and is slowly ' +\
+        'dropping to the sea bottom. Roll twice for carnivores and ' +\
+        'scavengers preying on the body.'
+]
+EVENTS_RUINS_TABLE = [
+    'Referee-supplied event.'
+]
+EVENTS_CAVE_TABLE = [
+    'Referee-supplied event.'
+]
 EVENTS_VACUUM_TABLE = [
     'Dust pool. Fine dust conceals a deep pit. Roll 6+ to avoid or 2D damage',
     'Stellar flare. Communications impossible without touching helmets',
