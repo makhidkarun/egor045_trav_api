@@ -17,6 +17,11 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
 
+def catch_html_space(text):
+    '''Catch HTML space (%20) in text'''
+    return text.replace('%20', ' ')
+
+
 class EncounterTable(RequestProcessor):
     '''
     Return CT LBB3 wilderness encounter table
@@ -111,12 +116,14 @@ class EncounterTable(RequestProcessor):
             try:
                 if int(self.query_parameters['size']) == 1:
                     table = EncounterTable1D(
-                        terrain=self.query_parameters['terrain'],
+                        terrain=catch_html_space(
+                            self.query_parameters['terrain']),
                         uwp=self.query_parameters['uwp']
                     )
                 else:
                     table = EncounterTable2D(
-                        terrain=self.query_parameters['terrain'],
+                        terrain=catch_html_space(
+                            self.query_parameters['terrain']),
                         uwp=self.query_parameters['uwp']
                     )
             except ValueError as err:
