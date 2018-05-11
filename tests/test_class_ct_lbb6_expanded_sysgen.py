@@ -12,6 +12,7 @@ sys.path.insert(
     0,
     os.path.dirname(os.path.abspath(__file__)) + '/../')
 from traveller_api.ct.lbb6_expanded_sysgen.system import LBB6ExpandedStar
+from traveller_api.ct.lbb6_expanded_sysgen.system import LBB6CompanionStar
 from traveller_api.ct.lbb6.planet import LBB6Planet
 
 LOGGER = logging.getLogger(__name__)
@@ -43,6 +44,13 @@ class TestExpandedStar(unittest.TestCase):
         star = LBB6ExpandedStar(mainworld)
         self.assertTrue(star.type == 'M')
         self.assertTrue(star.size == 'V')
+        LOGGER.debug(
+            'star.size_roll = %s, star.type_roll = %s',
+            star.size_roll,
+            star.type_roll
+        )
+        self.assertTrue(star.size_roll == 6)
+        self.assertTrue(star.type_roll == 6)
 
 
     def test_json(self):
@@ -66,3 +74,17 @@ class TestExpandedStar(unittest.TestCase):
         star = LBB6ExpandedStar(mainworld=None, code=code)
         LOGGER.debug('json = %s', star.json())
         self.assertTrue(expected == star.json())
+
+
+class TestCompanionStar(unittest.TestCase):
+    '''LBB6CompanionStar unit tests'''
+
+    @patch('traveller_api.ct.util.Die.roll', side_effect=mock_d6_roll_1)
+    def test_create(self, mock_fn):
+        '''Create tests'''
+        mainworld = LBB6Planet(uwp='A788767-8')
+        parent = LBB6ExpandedStar(mainworld)
+        companion = LBB6CompanionStar(parent)
+        LOGGER.debug('companion = %s', str(companion))
+        self.assertTrue(companion.type == 'K')
+        self.assertTrue(companion.size == 'V')

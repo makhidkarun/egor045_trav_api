@@ -28,6 +28,10 @@ COMPANION_STAR_SIZES = [
     'Ia', 'Ib', 'II', 'III', 'IV', 'D', 'D',
     'V', 'V', 'VI', 'D', 'D', 'D'
 ]
+COMPANION_STAR_ORBITS = [
+    'Close', 'Close', 'Close', 'Close', '1', '2', '3',
+    '4+1D', '5+1D', '6+1D', '7+1D', '8+1D', 'Far'
+]
 GAS_GIANT_QTY = [0, 1, 1, 1, 2, 2, 3, 3, 4, 4, 4, 5, 5]
 PLANETOID_QTY = [3, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1]
 
@@ -69,6 +73,36 @@ class LBB6ExpandedStar(Star):
 
         star_size = STAR_SIZES[self.size_roll]
         star_type = STAR_TYPES[self.type_roll]
+        star_decimal = randint(0, 9)
+
+        if star_size == 'D':
+            code = '{}D'.format(star_size)
+        else:
+            code = '{}{} {}'.format(star_type, star_decimal, star_size)
+        return code
+
+
+class LBB6CompanionStar(Star):
+    '''Extend Star to cover companion stars'''
+
+    def __init__(self, parent):
+        self.orbit = []
+        code = self.generate(parent)
+        super().__init__(code)
+
+    @staticmethod
+    def generate(parent):
+        '''Generate star details'''
+        try:
+            # Type
+            type_roll = D6.roll(2, parent.type_roll, floor=0, ceiling=12)
+            star_type = COMPANION_STAR_TYPES[type_roll]
+            # Size
+            size_roll = D6.roll(2, parent.size_roll, floor=0, ceiling=12)
+            star_size = COMPANION_STAR_SIZES[size_roll]
+        except AttributeError:
+            raise ValueError('parent must have type_roll and size_roll values')
+
         star_decimal = randint(0, 9)
 
         if star_size == 'D':
