@@ -101,7 +101,7 @@ class LBB6CompanionStar(Star):
             size_roll = D6.roll(2, parent.size_roll, floor=0, ceiling=12)
             star_size = COMPANION_STAR_SIZES[size_roll]
         except AttributeError:
-            raise ValueError('parent must have type_roll and size_roll values')
+            raise ValueError('parent must have type_roll and size_roll attributes')
 
         star_decimal = randint(0, 9)
 
