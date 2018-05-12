@@ -91,17 +91,18 @@ def test_create_1d(client):
 def test_list_terrains(client):
     '''Test list_terrains'''
 
-    expected = [
+    expected = sorted([
         'Clear', 'Prairie', 'Rough', 'Broken', 'Mountain', 'Forest',
         'Jungle', 'River', 'Swamp', 'Marsh', 'Desert', 'Beach',
         'Surface', 'Shallows', 'Depths', 'Bottom', 'Sea Cave', 'Sargasso',
         'Ruins', 'Cave', 'Chasm', 'Crater'
-    ]
+    ])
 
     resp = client.simulate_get(
         '/ct/lbb3/encounter',
         query_string='list_terrains=true'
     )
+    LOGGER.debug('expected = %s', expected)
     LOGGER.debug('received = %s', resp.json)
     assert resp.json == expected
 

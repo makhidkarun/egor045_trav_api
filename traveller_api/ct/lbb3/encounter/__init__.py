@@ -109,7 +109,7 @@ class EncounterTable(RequestProcessor):
             resp.status = falcon.HTTP_200
         elif self.query_parameters['list_terrains'] is True:
             lst = []
-            lst.extend(TERRAIN_TYPES_DM.keys())
+            lst.extend(sorted(TERRAIN_TYPES_DM.keys()))
             resp.body = json.dumps(lst)
             resp.status = falcon.HTTP_200
         else:
