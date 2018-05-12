@@ -2,6 +2,7 @@
 
 import json
 import logging
+from collections import OrderedDict
 from textwrap import wrap
 from traveller_api.ct.lbb3.worldgen.planet import System
 from traveller_api.ct.lbb3.encounter.animal import Carnivore
@@ -20,7 +21,7 @@ class EncounterTableBase(object):
 
     def __init__(self, terrain, uwp=None):
         self.terrain = None
-        self.rows = {}
+        self.rows = OrderedDict()
         self.__size = 0
         self.planet = None
 
