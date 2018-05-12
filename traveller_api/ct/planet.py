@@ -60,7 +60,7 @@ class Planet(object):
             'uwp': str(self),
             'trade_codes': self.trade_codes
         }
-        return json.dumps(doc)
+        return json.dumps(doc, sort_keys=True)
 
     def load_uwp(self, uwp):
         '''Load from UWP'''

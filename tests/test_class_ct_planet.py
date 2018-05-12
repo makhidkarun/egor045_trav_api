@@ -69,9 +69,11 @@ class TestPlanet(unittest.TestCase):
     @patch('traveller_api.ct.util.Die.roll', side_effect=mock_d6_roll)
     def test_json(self, mock_fn):
         '''Test json() method'''
-        expected = '{"name": "", "uwp": "B433432-A", "trade_codes": ["Ni", "Po"]}'
+        expected = '{"name": "", "trade_codes": ["Ni", "Po"], "uwp": "B433432-A"}'
         planet = Planet()
         planet.generate()
+        LOGGER.debug('expected      = %s', expected)
+        LOGGER.debug('planet.json() = %s', planet.json())
         self.assertTrue(planet.json() == expected)
 
 
